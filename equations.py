@@ -15,19 +15,24 @@ def Yd(w,w0,Q):
   return -w0*w0*w0*w/Q/( (w0*w0-w*w)*(w0*w0-w*w) + w*w*w0*w0/Q/Q )
 
 def Xr(t,w,w0,Q):
-  #t = float(t)
-  #w = float(w)
-  #w0 = float(w0)
-  #Q = float(Q)
-  return np.e**(-w*t/(2*Q))*(Xd(w,w0,Q)*np.cos(t*(w0 - w)) + Yd(w,w0,Q)*w/w0*np.sin(t*(w0 - w)))
+    if t > 0:
+        return np.e**(-w*t/(2*Q))*(Xd(w,w0,Q)*np.cos(t*(w0 - w)) + Yd(w,w0,Q)*w/w0*np.sin(t*(w0 - w)))
+    if t <= 0:
+        return Xd(w,w0,Q)
+    #t = float(t)
+    #w = float(w)
+    #w0 = float(w0)
+    #Q = float(Q)
 
 def Yr(t,w,w0,Q):
-  #t = float(t)
-  #w = float(w)
-  #w0 = float(w0)
-  #Q = float(Q)
-  return np.e**(-w*t/(2*Q))*(-Xd(w,w0,Q)*np.sin(t*(w0 - w)) + Yd(w,w0,Q)*w/w0*np.cos(t*(w0 - w)))
-
+    #t = float(t)
+    #w = float(w)
+    #w0 = float(w0)
+    #Q = float(Q)
+    if t > 0:
+        return np.e**(-w*t/(2*Q))*(-Xd(w,w0,Q)*np.sin(t*(w0 - w)) + Yd(w,w0,Q)*w/w0*np.cos(t*(w0 - w)))
+    if t <= 0:
+        return Yd(w,w0,Q)
 
 #Equation for fitting (Spectral Q)
 def yqfit(w,Q):
