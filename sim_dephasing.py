@@ -24,9 +24,8 @@ import pylab as pl
 #execfile('mtx_parser.py') #to save data as mtx file
 #execfile('gnu.py') # to plot using gnuplot
 #execfile('equations.py') # load my equations
-import equation as eq
+import equations as eq
 import mtxparser as mp
-
 
 
 filename = 'sim_dephasing_lockin.mtx'
@@ -36,7 +35,7 @@ dephasing = np.linspace(0, 50, 50)#in (Mhz*2.355) (FWHM)
 
 span = w0/Q*30 #0.1*pi;
 rdtime = int(Q/w0*12.0)
-t = np.linspace(0.0, rdtime, 601) #Ringdowntime in usec
+t = np.linspace(-10, rdtime, 601) #Ringdowntime in usec
 w = np.linspace(w0-span, w0+span, 601) #Frequency range
 
 x = eq.Xd(w, w0, Q)
@@ -92,7 +91,7 @@ data_filt3 = a[170:330] #crop an averaged filter
 i = 0
 for f in w:
     Yrd = eq.Yr(t, f, w0, Q) #a ringdown list 10,9,8,7,5,4,2...0
-    Yrd = signal.convolve(Yrd,data_filt3) #this can be uncommented to deactivate the lockin filter sim.
+    #Yrd = signal.convolve(Yrd,data_filt3) #this can be uncommented to deactivate the lockin filter sim.
     Y[i] = Yrd[0:len(t)] #assing to a 2d data map. (X vs Y)
     i += 1
 matrix[0] = Y #asign to a 3d data map (X vs Y vs Z)
@@ -174,7 +173,7 @@ head = ['Units', 'Qs_fits',
         'RF frequency (MHz)', str(w[-1]/2/np.pi), str(w[0]/2/np.pi),
         'other', '0', '1']
 
-mp.savemtx('qsfit.mtx', eq.qsfit, header=head) #save as MTX
+mp.savemtx('qsfit.mtx', qsfit, header=head) #save as MTX
 
 #Save the Ringdown fitting matix into one MTX file
 head = ['Units', 'Qs_fits',
