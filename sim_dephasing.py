@@ -91,6 +91,13 @@ data_filt3 = a[170:330] #crop an averaged filter
 i = 0
 for f in w:
     Yrd = eq.Yr(t, f, w0, Q) #a ringdown list 10,9,8,7,5,4,2...0
+    
+    val1 = eq.Yr(0, f, w0, Q)
+    j = 0
+    while t[j] < 0:
+        Yrd[j] = val1
+        j += 1
+          
     #Yrd = signal.convolve(Yrd,data_filt3) #this can be uncommented to deactivate the lockin filter sim.
     Y[i] = Yrd[0:len(t)] #assing to a 2d data map. (X vs Y)
     i += 1
