@@ -15,7 +15,8 @@ from scipy import signal
 #import scipy.signal as signal
 #from scipy.signal.convolve
 import scipy.ndimage #The fastest filter
-import pylab as pl
+import matplotlib.pyplot as pl
+
 
 #import matplotlib.pyplot as pl
 
@@ -28,7 +29,7 @@ import equations as eq
 import mtxparser as mp
 
 
-filename = 'sim_dephasing_lockin.mtx'
+filename = 'sim_dephasing.mtx'
 Q = 6000.0
 w0 = 300.0*2*np.pi
 dephasing = np.linspace(0, 50, 50)#in (Mhz*2.355) (FWHM)
@@ -61,6 +62,7 @@ spcov = np.zeros([len(dephasing), 1, 1])
 qsfit = np.zeros([1, len(dephasing)*2, len(w)])
 qrfit = np.zeros([1, len(dephasing)*2, len(t)])
 
+'''
 #extract the lockin convolution filter from (a step function)
 mtx1_data, mtx1_header = mp.loadmtx('meas_data/n20dBm_amp.mtx')
 mtx1_data = mtx1_data[0] #it is a 2d colour map no 3d req.
@@ -69,7 +71,7 @@ data_off = data_off/data_off.max()
 data_filt = -np.diff(data_off,1) #obtain Filter
 data_filt2 = data_filt[2000:4000] #croped for this particular data set
 
-#some experimental averaging
+#averaging and croping some parts of the filter
 fact = 1
 a = np.zeros(len(t)/fact)
 a = np.array(a)
@@ -86,13 +88,14 @@ for i in range(0,len(data_filt)):
     else:
         break;
 data_filt3 = a[170:330] #crop an averaged filter
+'''
 
 #creates first matrix without any dephasing
 i = 0
 for f in w:
     Yrd = eq.Yr(t, f, w0, Q) #a ringdown list 10,9,8,7,5,4,2...0
     
-    val1 = eq.Yr(0, f, w0, Q)
+    val1 = eq.Yd(f, w0, Q) #eq.Yr(0, f, w0, Q)
     j = 0
     while t[j] < 0:
         Yrd[j] = val1
