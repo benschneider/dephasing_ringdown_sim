@@ -2,6 +2,7 @@
 import numpy as np
 #def hho(w,w0,q):
 #  return w0*w0/(w0*w0-w*w + i*w*w0/Q)
+
 def Xd(w,w0,Q):
   #w = float(w)
   #w0 = float(w0)
@@ -28,16 +29,38 @@ def Yr(t,w,w0,Q):
     #Q = float(Q)
     return np.e**(-w*t/(2*Q))*(-Xd(w,w0,Q)*np.sin(t*(w0 - w)) + Yd(w,w0,Q)*w/w0*np.cos(t*(w0 - w)))
 
-#Equation for fitting (Spectral Q)
-def yqfit(w,Q):
-    w0 = 300*2*np.pi; #at a fixed freq
+def Xr2(t,w,w0,Q):
+    return np.e**(-w*t/(2*Q))*(Xd(w,w0,Q)*np.cos(t*(w0 - w))**2 + Yd(w,w0,Q)*w/w0*np.sin(t*(w0 - w))**2)
+    #t = float(t)
+    #w = float(w)
+    #w0 = float(w0)
+    #Q = float(Q)
+
+def Yr2(t,w,w0,Q):
+    #t = float(t)
+    #w = float(w)
+    #w0 = float(w0)
+    #Q = float(Q)
+    return np.e**(-w*t/(2*Q))*(-Xd(w,w0,Q)*np.sin(t*(w0 - w))**2 + Yd(w,w0,Q)*w/w0*np.cos(t*(w0 - w))**2)
+
+def yqfit(w, Q, w0 =300*2*np.pi):
+    ''' Equation for fitting (Spectral Q)'''
+    #w0 = 300*2*np.pi; #at a fixed freq
     return -w0*w0*w0*w/Q/( (w0*w0-w*w)*(w0*w0-w*w) + w*w*w0*w0/Q/Q )
 
-
-#Equation for fitting (Ringdown Q)
-def expfit(t, Q, a, b):
-    w0 = 300*2*np.pi; #at a fixed freq
+def expfit(t, Q, a, b, w0 =300*2*np.pi):
+    '''Equation for fitting (Ringdown Q)'''
+    #w0 = 300*2*np.pi; #at a fixed freq
     return (a*np.e**(-t*w0/(2*Q))+b)
+
+
+def Qd(Qs,Qr):
+    ''' Equation returns an estimate for Qr to be used, 
+    given an estimate to Qr for a given Qs and Qd 
+    '''
+    tmp = 1.0/(1.0/float(Qs)-1.0/float(Qr))
+    return tmp
+
 
 #Equation for lowpass (returns a gaussian)
 #Doing the Lowpas in C,
@@ -52,6 +75,8 @@ def gaus(sigma=1,pos = 50, w = range(0,100)):
     #g2 = np.ones([m,len(w)]);
     return g1 #zip(*g1*g2)
     #a gaussian 
+
+    
 '''
 from numpy import array, zeros, ones, flipud, fliplr
 from scipy.signal import lfilter

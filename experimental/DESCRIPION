@@ -1,0 +1,6 @@
+*.WFM.csv :
+signal output of the Lock-in amplifier
+Tc = 1.2 us or Tc = 900 ns
+Filter order 1,7,8
+
+input : Step function

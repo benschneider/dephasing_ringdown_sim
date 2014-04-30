@@ -10,57 +10,87 @@ import numpy as np
 #from numpy import sin, cos, e, pi, sqrt, linspace, array, zeros, ones, savetxt
 import numpy as np
 #from time import time
-from scipy.optimize import curve_fit
-from scipy import signal
+#from scipy.optimize import curve_fit
+#from scipy import signal
 #import scipy.signal as signal
 #from scipy.signal.convolve
-import scipy.ndimage #The fastest filter
-import matplotlib.pyplot as pl
-
-
+#import scipy.ndimage #The fastest filter
 #import matplotlib.pyplot as pl
 
-
-#t0 = time()
-#execfile('mtx_parser.py') #to save data as mtx file
-#execfile('gnu.py') # to plot using gnuplot
-#execfile('equations.py') # load my equations
-import equations as eq
-import mtxparser as mp
-
+#Note if debugging these files, better use execfile('...py') 
+#otherwise changes are updated only after a kernel restart
+#import equations as eq
+import mtxparser as mtx
+import simulation_functions as sim
 
 filename = 'sim_dephasing.mtx'
+
 Q = 6000.0
-w0 = 300.0*2*np.pi
-dephasing = np.linspace(0, 50, 50)#in (Mhz*2.355) (FWHM)
-
-span = w0/Q*30 #0.1*pi;
+w0 = 300.0*10*np.pi
+dephasing = np.linspace(0, 50, 2)#in (Mhz*2.355) (FWHM)
+span = w0/Q*30 
 rdtime = int(Q/w0*12.0)
-t = np.linspace(-10, rdtime, 601) #Ringdowntime in usec
-w = np.linspace(w0-span, w0+span, 601) #Frequency range
 
-x = eq.Xd(w, w0, Q)
-y = eq.Yd(w, w0, Q)
+t = np.linspace(-3, rdtime, 5001) #Ringdowntime in usec
+w = np.linspace(w0-span, w0+span, 1501) #Frequency range
 
-pl.plot(w/2/np.pi, x)
-pl.plot(w/2/np.pi, y)
-#pl.show()
-
-#gn.plot(Gnuplot.Data(w/2/pi,x))
-#gn.replot(Gnuplot.Data(w/2/pi,y))
-
-Y = np.zeros([len(w), len(t)]) #Yes lets chew up some temp.memory
 matrix = np.zeros((len(dephasing), len(w), len(t))) #The result matrix
 
-#For ringdown fits
-rpopt = np.zeros([len(dephasing), 3])
-rpcov = np.zeros([len(dephasing), 3, 3])
-spopt = np.zeros([len(dephasing), 1])
-spcov = np.zeros([len(dephasing), 1, 1])
+matrix[0] = sim.get_ringdown_Y(w, w0, t, Q) #get non dephased matrix
 
-#Matrix containing the linecut and its fit to be seen in spyview
-qsfit = np.zeros([1, len(dephasing)*2, len(w)])
-qrfit = np.zeros([1, len(dephasing)*2, len(t)])
+matrix = sim.get_dephased_matrix(matrix, dephasing) #get dephasing to matrix
+
+
+
+
+
+#fit the spectral and ringdown Q of the matrix 
+#qrfit contains a 2d data with alternating lines containing the data and the fit
+#Qrs contains the Q factor and dephasng
+Qrs, qrfit = sim.fit_mat_ringdown(t, matrix) #fit ringdown Q for each dephasing
+
+Qsp, qsfit = sim.fit_matrix_spectral(w, matrix) #fir spectral Q for each dephasing
+
+#Dephasing (per pixel) per (w0/Q)
+deph_fact = ((w.max()-w.min())/len(w))*Q/w0
+
+#prepare stuff to be saved into the txt file
+stuff = (dephasing*deph_fact, Qrs[0], Qsp[0])
+mtx.savedat("QsQr.txt", stuff, delimiter='\t')
+
+
+
+
+#Save the Spectral fitting matix into one MTX file
+head = ['Units', 'Qs_fits',
+        'Dephasing (rel to FWHM)', '0', str(deph_fact*dephasing[-1]),
+        'RF frequency (MHz)', str(w[-1]/2/np.pi), str(w[0]/2/np.pi),
+        'other', '0', '1']
+
+mtx.savemtx('qsfit.mtx', qsfit, header=head) #save as MTX
+
+#Save the Ringdown fitting matix into one MTX file
+head = ['Units', 'Qs_fits',
+        'Dephasing (rel to FWHM)', '0', str(deph_fact*dephasing[-1]),
+        'Time (us)', str(t[-1]), str(t[0]),
+        'other', '0', '1']
+mtx.savemtx('qrfit.mtx', qrfit, header=head) #save as MTX
+
+#Save the dephasing matix into another MTX file
+head = ['Units', 'X Y R [V]#values',
+        'Time (us)', str(t[0]), str(t[-1]),
+        'RF frequency (MHz)', str(w[-1]/2/np.pi), str(w[0]/2/np.pi),
+        'Dephasing (rel to FWHM)', '0', str(deph_fact*dephasing[-1])]
+mtx.savemtx(filename, matrix, header = head) #save as MTX
+#'''
+
+'''
+this is just a testplot
+x = eq.Xd(w, w0, Q)
+y = eq.Yd(w, w0, Q)
+pl.plot(w/2/np.pi, x)
+pl.plot(w/2/np.pi, y)
+'''
 
 '''
 #extract the lockin convolution filter from (a step function)
@@ -79,7 +109,7 @@ avg = float(len(data_filt))/float(len(t))*fact
 avg = int(avg)
 j = 0
 j2 = 0
-for i in range(0,len(data_filt)):
+for i in range(0,len(data_filt)+1):
     j = i%avg
     if j == 0 and i != 0:
         j2 +=1
@@ -90,30 +120,6 @@ for i in range(0,len(data_filt)):
 data_filt3 = a[170:330] #crop an averaged filter
 '''
 
-#creates first matrix without any dephasing
-i = 0
-for f in w:
-    Yrd = eq.Yr(t, f, w0, Q) #a ringdown list 10,9,8,7,5,4,2...0
-    
-    val1 = eq.Yd(f, w0, Q) #eq.Yr(0, f, w0, Q)
-    j = 0
-    while t[j] < 0:
-        Yrd[j] = val1
-        j += 1
-          
-    #Yrd = signal.convolve(Yrd,data_filt3) #this can be uncommented to deactivate the lockin filter sim.
-    Y[i] = Yrd[0:len(t)] #assing to a 2d data map. (X vs Y)
-    i += 1
-matrix[0] = Y #asign to a 3d data map (X vs Y vs Z)
-
-#do lowpass of the matrix
-k = 1
-for d in dephasing[1:]: #d = sigma
-    temp2 = np.zeros((len(t), len(w)))
-    l = 0
-    #do a first order LP req 2usec see paper by Young & Vliet
-    matrix[k] = scipy.ndimage.filters.gaussian_filter(matrix[0], (d, 0))
-    k += 1
 
 #fit the first stuff
 #optimize.leastsq
@@ -132,6 +138,7 @@ for d in dephasing[1:]: #d = sigma
 #qrfit[0] = Ringdown
 #qrfit[1] = expfit(t,*rpopt[0])
 
+'''
 #fit dephased data.
 for k in range(0, len(dephasing)):
     #Fit data:
@@ -164,37 +171,8 @@ for k in range(0, len(dephasing)):
 
 Qrs = zip(*rpopt)
 Qsp = zip(*spopt)
+
 pl.subplot(3, 1, 3)
 pl.plot(dephasing, Qrs[0])
 pl.plot(dephasing, Qsp[0])
-pl.hold(True)
-
-
- #Dephasing (per pixel) per (w0/Q)
-deph_fact = ((w.max()-w.min())/len(w))*Q/w0
-
-#prepare stuff to be saved into the txt file
-stuff = (dephasing*deph_fact, Qrs[0], Qsp[0])
-mp.savedat("QsQr.txt", stuff, delimiter='\t')
-
-#Save the Spectral fitting matix into one MTX file
-head = ['Units', 'Qs_fits',
-        'Dephasing (rel to FWHM)', '0', str(deph_fact*dephasing[-1]),
-        'RF frequency (MHz)', str(w[-1]/2/np.pi), str(w[0]/2/np.pi),
-        'other', '0', '1']
-
-mp.savemtx('qsfit.mtx', qsfit, header=head) #save as MTX
-
-#Save the Ringdown fitting matix into one MTX file
-head = ['Units', 'Qs_fits',
-        'Dephasing (rel to FWHM)', '0', str(deph_fact*dephasing[-1]),
-        'Time (us)', str(t[-1]), str(t[0]),
-        'other', '0', '1']
-mp.savemtx('qrfit.mtx', qrfit, header=head) #save as MTX
-
-#Save the dephasing matix into another MTX file
-head = ['Units', 'X Y R [V]#values',
-        'Time (us)', str(t[0]), str(t[-1]),
-        'RF frequency (MHz)', str(w[-1]/2/np.pi), str(w[0]/2/np.pi),
-        'Dephasing (rel to FWHM)', '0', str(deph_fact*dephasing[-1])]
-mp.savemtx(filename, matrix, header = head) #save as MTX
+'''
