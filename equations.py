@@ -62,7 +62,10 @@ def pix2f(w):
 #1995; Signal Processing, 44: 139-151). The recursive approximation is
 #very accurate and does not introduce ringing. It is anti-causal
 #(forward-backward) and has zero phase response.
-#by using this correlation funcion from the scipy lib.
+
+#or using a correlation funcion from the scipy lib.
+# which is a lot slower but good enough for now.
+
 '''
 def gaus(sigma=1,pos = 50, w = range(0,100)): 
     g1 = [1 / (sigma * np.sqrt(2*np.pi)) * np.e**(-float(x-pos)**2/(2*sigma**2)) for x in w]
@@ -70,9 +73,9 @@ def gaus(sigma=1,pos = 50, w = range(0,100)):
     return g1 #zip(*g1*g2)
     #a gaussian 
 
-  
 
-  
+# the following can be derived with a simple taylor expansion of a gaussian
+# and doing some fancy stuff with it which is cool but ... nah...
 
 from numpy import array, zeros, ones, flipud, fliplr
 from scipy.signal import lfilter

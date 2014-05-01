@@ -41,7 +41,7 @@ def get_ringdown_X2(w, w0, t, Qr):
         k +=1
     return matrix
 
-def get_ringdown_Y(w, w0, t, Q):
+def get_ringdown_Y(w, w0, t, Q, norm = False):
     Y = np.zeros([len(w), len(t)]) #Get empty 2d Matrix
     ''' creates first matrix without any dephasing
     This creates the Y quadrature output of a lockin measuring 
@@ -50,15 +50,20 @@ def get_ringdown_Y(w, w0, t, Q):
     i = 0
     for f in w:
         Yrd = eq.Yr(t, f, w0, Q) #a ringdown list 10,9,8,7,5,4,2...0
-        
+
         val1 = eq.Yr2(0, f, w0, Q) #eq.Yr(0, f, w0, Q)
         j = 0
         while t[j] < 0:
             Yrd[j] = val1
             j += 1
+
         #Yrd = signal.convolve(Yrd,data_filt3) #convolve signal with lockin time response function
         Y[i] = Yrd[0:len(t)] #assing to a 2d data map. (X vs Y)
         i += 1
+
+        if norm:
+            Y = Y/Q #normalize ouput, make highest value = 1
+
     return Y
 
 def get_ringdown_Y2(w, w0, t, Qr):
@@ -68,15 +73,6 @@ def get_ringdown_Y2(w, w0, t, Qr):
         matrix[k]  = get_ringdown_Y(w, w0, t, Q)
         k +=1
     return matrix
-
-# OLD NOT IN USE
-#def get_dephased_matrix(matrix, dephasing):
-#    k = 1
-#    for d in dephasing: #d = sigma
-#        #do a first order LP req 2usec see paper by Young & Vliet
-#        matrix[k] = scipy.ndimage.filters.gaussian_filter(matrix[0], (d, 0))
-#        k += 1
-#    return matrix
 
 def get_dephased_matrix(matrix, dephasing, w, method='gaus'):
     ''' method can be gausian dephasing or resonator lorenzian like dephasing.
@@ -93,7 +89,7 @@ def _get_dephased_matrix_lor(matrix, dephasing, w):
     ''' dephasing convolved with a resonator like line shape'''
     k = 1
     for Qd in dephasing:
-        filter2d =  get_filter2d(w,Qd, crop = int(matrix.shape[1]/2.1))    
+        filter2d =  filter2d_lor(w,Qd) #crop = int(matrix.shape[1]/3))    
         matrix[k] = signal.convolve2d(matrix[k], filter2d, mode = 'same') #and here python commits suicide...
         k += 1
     return matrix
@@ -113,13 +109,13 @@ def _get_dephased_matrix_gaus(matrix, dephasing, w):
     return matrix
 
 # for a range of Qr and a fixed assumed Qs
-def get_filter2d(w, Qd, crop = 0):
+def filter2d_lor(w, Qd, crop = 0):
     ''' -
     w is the list of frequencies
     Qd the dephasing Q factor 
     and crop != 0 crops from both ends points
     '''
-    function = eq.yqfit(w, Qd) #obtain a lorenzian line shape
+    function = -eq.yqfit(w, Qd) #obtain a lorenzian line shape
     function = -function/Qd
     #this simply crops off the edges of the filter    
     if crop > 0:
@@ -131,7 +127,18 @@ def get_filter2d(w, Qd, crop = 0):
         filter2d[j] = function
         
     filter2d = zip(*filter2d) #rotate
-    return filter2d
+    return np.array(filter2d)
+
+
+def get_normed_matrix(matrix, Qr):
+    '''
+    this function simply normalized the matrix using its Q-factors
+    '''
+    k = 0    
+    for Q in Qr:
+        matrix[k] = matrix[k] / Q
+        k += 1
+    return matrix
 
 
 def fit_mat_ringdown(t, matrix):
@@ -168,7 +175,7 @@ def fit_mat_ringdown(t, matrix):
    
 def fit_matrix_spectral(w, matrix):
     '''  Fit the created ringdown matrix, 
-    it will assume a matrix with the following shape and form: 
+    it will assume a matrix with the following shape and form: ...
     output:
     fit results Q factor per dephasing
     matrix containing the fit and dephasing positions used
@@ -194,4 +201,3 @@ def fit_matrix_spectral(w, matrix):
 
     Qsp = zip(*spopt)    
     return Qsp, qsfit
-

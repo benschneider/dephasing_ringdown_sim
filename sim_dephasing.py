@@ -8,20 +8,25 @@ be carefull not to increase the limits too much a high
 
 #from numpy import sin, cos, e, pi, sqrt, linspace, array, zeros, ones, savetxt
 import numpy as np
-from time import time
 #from scipy.optimize import curve_fit
 #from scipy import signal
 #import scipy.signal as signal
 #from scipy.signal.convolve
 #import scipy.ndimage #The fastest filter
-import matplotlib.pyplot as pl #for debugging
+
+#for debugging
+from time import time
+import matplotlib.pyplot as pl 
 
 import equations as eq
 import mtxparser as mtx
 import simulation_functions as sim
 '''Note if debugging these files, better use execfile('...py') 
 otherwise changes are updated only after a kernel restart
+still missing some pieces of code
 '''
+
+# -------- Set variabes preperation for simulation ---------
 
 #output filenames
 filename1 = 'QsQr.txt'
@@ -54,28 +59,39 @@ t  = np.linspace(t_0, t_1, t_p)
 w  = np.linspace(w_0, w_1, w_p)
 Qr = np.linspace(Qr_0, Qr_1, Qr_p)
 
+# -------- Start simulation and fitting ---------
+
 #calculate required dephasing
-Qd = eq.Qd(Qs,Qr[1:])
+Qd = eq.Qd(Qs,Qr[1:]) #get array
 
 #create non dephased matrix
 matrix = sim.get_ringdown_Y2(w, w0, t, Qr) 
+
+#normalize matrix
+matrix = sim.get_normed_matrix(matrix, Qr)
+
 #dephase matrix accordingly
 t1 = time()
 matrix = sim.get_dephased_matrix(matrix, Qd, w, method='lor')
 print time()-t1
 
-
 #fit ringdown Q for each point of dephasing 
 Qrs, qrfit = sim.fit_mat_ringdown(t, matrix) 
 #fit spectral Q for each point of dephasing
 Qsp, qsfit = sim.fit_matrix_spectral(w, matrix) 
-''' qrfit contains a 2d data with alternating lines 
+
+''' 
+qrfit contains a 2d data with alternating lines 
 containing the data and the fit 
-Qrs contains the Q factor and dephasng '''
-stuff = (Qr, Qrs[0], Qsp[0])
+Qrs contains the Q factor and dephasng 
+'''
+
+
+# ------- Save data into files --------
 
 
 #save fiting results into dat file
+stuff = (Qr, Qrs[0], Qsp[0])
 mtx.savedat(filename1, stuff, delimiter='\t') 
 
 #Save the Spectral fitting matix into one MTX file
