@@ -8,7 +8,7 @@ be carefull not to increase the limits too much a high
 
 #from numpy import sin, cos, e, pi, sqrt, linspace, array, zeros, ones, savetxt
 import numpy as np
-#from time import time
+from time import time
 #from scipy.optimize import curve_fit
 #from scipy import signal
 #import scipy.signal as signal
@@ -23,77 +23,83 @@ import simulation_functions as sim
 otherwise changes are updated only after a kernel restart
 '''
 
-filename = 'sim_dephasing.mtx'
-
+#output filenames
+filename1 = 'QsQr.txt'
+filename2 = 'qsfit.mtx'
+filename3 = 'qsfit.mtx'
+filename4 = 'sim_dephasing.mtx'
+ 
 #set variables
-Q = 6000.0 #a first assumption of the Q
 Qs = 1500
 w0 = 300.0*2*np.pi
-dephasing_points = 3
 
-dephasing = np.linspace(0, 1, dephasing_points)#in (Mhz*2.355) (FWHM)
-span = w0/Qs*10 
-rdtime = int(Q/w0*12.0)
+#Ringdowntime in usec
+t_0 = -3 #start
+t_1 = int(Qs/w0*20.0) #stop
+t_p = 3001 #number of points
 
-t = np.linspace(-3, rdtime, 5001) #Ringdowntime in usec
-w = np.linspace(w0-span, w0+span, 1501) #Frequency range
-#matrix = np.zeros((dephasing_points, len(w), len(t))) #The result matrix
+#Frequency in MHz
+span = w0/Qs*10
+w_0 = w0-span
+w_1 = w0+span
+w_p = 1501
 
+#Ringdown Q factor range
+Qr_0 = Qs
+Qr_1 = Qs*30
+Qr_p = 3
 
-'''
-#set some range of Qr between:
-#Qs = 1500
-#Qr = Qs and Qd = 0
-#to Qr = 10*Qs and Qs = ...
-#start with:
-'''
+#make np arrays
+t  = np.linspace(t_0, t_1, t_p)
+w  = np.linspace(w_0, w_1, w_p)
+Qr = np.linspace(Qr_0, Qr_1, Qr_p)
 
-Qr = np.linspace(Qs,Qs*10,dephasing_points)
-dephasing = eq.Qd(Qs,Qr)
+#calculate required dephasing
+Qd = eq.Qd(Qs,Qr[1:])
 
-matrix = sim.get_ringdown_Y2(w, w0, t, Qr)
-
-#matrix[0] = sim.get_ringdown_Y(w, w0, t, Q) #get non dephased matrix
-
-#matrix = sim.get_dephased_matrix(matrix, dephasing) #get dephasing to matrix
-matrix = sim.get_dephased_matrix_Y(matrix, dephasing, w)
-#fit the spectral and ringdown Q of the matrix 
-'''
-qrfit contains a 2d data with alternating lines containing the data and the fit
-Qrs contains the Q factor and dephasng
-'''
-Qrs, qrfit = sim.fit_mat_ringdown(t, matrix) #fit ringdown Q for each dephasing
-Qsp, qsfit = sim.fit_matrix_spectral(w, matrix) #fir spectral Q for each dephasing
+#create non dephased matrix
+matrix = sim.get_ringdown_Y2(w, w0, t, Qr) 
+#dephase matrix accordingly
+t1 = time()
+matrix = sim.get_dephased_matrix(matrix, Qd, w, method='lor')
+print time()-t1
 
 
+#fit ringdown Q for each point of dephasing 
+Qrs, qrfit = sim.fit_mat_ringdown(t, matrix) 
+#fit spectral Q for each point of dephasing
+Qsp, qsfit = sim.fit_matrix_spectral(w, matrix) 
+''' qrfit contains a 2d data with alternating lines 
+containing the data and the fit 
+Qrs contains the Q factor and dephasng '''
+stuff = (Qr, Qrs[0], Qsp[0])
 
-#Dephasing (per pixel) per (w0/Q)
-#deph_fact = ((w.max()-w.min())/len(w))*Q/w0
-deph_fact = 1
-stuff = (dephasing*deph_fact, Qrs[0], Qsp[0])
-mtx.savedat("QsQr.txt", stuff, delimiter='\t') #save fiting results into dat file
+
+#save fiting results into dat file
+mtx.savedat(filename1, stuff, delimiter='\t') 
 
 #Save the Spectral fitting matix into one MTX file
+#header file
 head = ['Units', 'Qs_fits',
-        'Dephasing (rel to FWHM)', '0', str(deph_fact*dephasing[-1]),
+        'Ringd_Q', str(Qr[0]) , str(Qr[-1]),
         'RF frequency (MHz)', str(w[-1]/2/np.pi), str(w[0]/2/np.pi),
-        'other', '0', '1']
-
-mtx.savemtx('qsfit.mtx', qsfit, header=head) #save as MTX
+        'none', '0', '1']
+mtx.savemtx(filename2, qsfit, header=head) #save in MTX format
 
 #Save the Ringdown fitting matix into one MTX file
 head = ['Units', 'Qs_fits',
-        'Dephasing (rel to FWHM)', '0', str(deph_fact*dephasing[-1]),
+        'Ringd_Q', str(Qr[0]) , str(Qr[-1]),
         'Time (us)', str(t[-1]), str(t[0]),
-        'other', '0', '1']
-mtx.savemtx('qrfit.mtx', qrfit, header=head) #save as MTX
+        'none', '0', '1']
+mtx.savemtx(filename3, qrfit, header=head)
 
 #Save the dephasing matix into another MTX file
 head = ['Units', 'X Y R [V]#values',
         'Time (us)', str(t[0]), str(t[-1]),
         'RF frequency (MHz)', str(w[-1]/2/np.pi), str(w[0]/2/np.pi),
-        'Dephasing (rel to FWHM)', '0', str(deph_fact*dephasing[-1])]
-mtx.savemtx(filename, matrix, header = head) #save as MTX
+        'Ringd_Q', str(Qr[0]), str(Qr[-1])]
+mtx.savemtx(filename4, matrix, header = head)
+
 
 
 '''

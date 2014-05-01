@@ -69,23 +69,48 @@ def get_ringdown_Y2(w, w0, t, Qr):
         k +=1
     return matrix
 
-def get_dephased_matrix(matrix, dephasing):
-    k = 1
-    for d in dephasing[1:]: #d = sigma
-        #do a first order LP req 2usec see paper by Young & Vliet
-        matrix[k] = scipy.ndimage.filters.gaussian_filter(matrix[0], (d, 0))
-        k += 1
-    return matrix
+# OLD NOT IN USE
+#def get_dephased_matrix(matrix, dephasing):
+#    k = 1
+#    for d in dephasing: #d = sigma
+#        #do a first order LP req 2usec see paper by Young & Vliet
+#        matrix[k] = scipy.ndimage.filters.gaussian_filter(matrix[0], (d, 0))
+#        k += 1
+#    return matrix
 
-def get_dephased_matrix_Y(matrix, dephasing, w):
+def get_dephased_matrix(matrix, dephasing, w, method='gaus'):
+    ''' method can be gausian dephasing or resonator lorenzian like dephasing.
+        method = 'gaus' > gaussian dehasing
+        method = 'lor'  > lor like shape dephasing
+    '''
+    if method == 'lor':
+        matrix = _get_dephased_matrix_lor(matrix, dephasing, w)
+    elif method == 'gaus':
+        matrix = _get_dephased_matrix_gaus(matrix, dephasing, w)
+    return matrix
+    
+def _get_dephased_matrix_lor(matrix, dephasing, w):    
+    ''' dephasing convolved with a resonator like line shape'''
     k = 1
-    for Qd in dephasing[1:]:
-        
-        filter2d =  get_filter2d(w,Qd, crop = 0)#int(matrix.shape[1]/2.2))    
+    for Qd in dephasing:
+        filter2d =  get_filter2d(w,Qd, crop = int(matrix.shape[1]/2.1))    
         matrix[k] = signal.convolve2d(matrix[k], filter2d, mode = 'same') #and here python commits suicide...
         k += 1
     return matrix
 
+def _get_dephased_matrix_gaus(matrix, dephasing, w):
+    ''' dephasing convolved with a gaussian line shape
+    This function is a lot faster!    
+    '''
+    k = 1
+    w0 = w.mean() #resonance frequency    
+    fpix = eq.pix2f(w) #(pixel/frequency)
+    for Qd in dephasing:
+        FWHM = w0/Qd #width in freq for given Q
+        pixel = FWHM*fpix/2  #in terms of number of pixel
+        matrix[k] = scipy.ndimage.filters.gaussian_filter(matrix[0], (pixel, 0))
+        k += 1
+    return matrix
 
 # for a range of Qr and a fixed assumed Qs
 def get_filter2d(w, Qd, crop = 0):
@@ -104,9 +129,9 @@ def get_filter2d(w, Qd, crop = 0):
 
     for j in range(0, filter2d.shape[0]):
         filter2d[j] = function
-    
+        
+    filter2d = zip(*filter2d) #rotate
     return filter2d
-
 
 
 def fit_mat_ringdown(t, matrix):

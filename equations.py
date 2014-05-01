@@ -4,43 +4,21 @@ import numpy as np
 #  return w0*w0/(w0*w0-w*w + i*w*w0/Q)
 
 def Xd(w,w0,Q):
-  #w = float(w)
-  #w0 = float(w0)
-  #Q = float(Q)
   return (w0*w0*w0*w0-w0*w0*w*w)/( (w0*w0-w*w)*(w0*w0-w*w) + w*w*w0*w0/Q/Q )
 
 def Yd(w,w0,Q):
-  #w = float(w)
-  #w0 = float(w0)
-  #Q = float(Q)
   return -w0*w0*w0*w/Q/( (w0*w0-w*w)*(w0*w0-w*w) + w*w*w0*w0/Q/Q )
 
 def Xr(t,w,w0,Q):
     return np.e**(-w*t/(2*Q))*(Xd(w,w0,Q)*np.cos(t*(w0 - w)) + Yd(w,w0,Q)*w/w0*np.sin(t*(w0 - w)))
-    #t = float(t)
-    #w = float(w)
-    #w0 = float(w0)
-    #Q = float(Q)
 
 def Yr(t,w,w0,Q):
-    #t = float(t)
-    #w = float(w)
-    #w0 = float(w0)
-    #Q = float(Q)
     return np.e**(-w*t/(2*Q))*(-Xd(w,w0,Q)*np.sin(t*(w0 - w)) + Yd(w,w0,Q)*w/w0*np.cos(t*(w0 - w)))
 
 def Xr2(t,w,w0,Q):
     return np.e**(-w*t/(2*Q))*(Xd(w,w0,Q)*np.cos(t*(w0 - w))**2 + Yd(w,w0,Q)*w/w0*np.sin(t*(w0 - w))**2)
-    #t = float(t)
-    #w = float(w)
-    #w0 = float(w0)
-    #Q = float(Q)
 
 def Yr2(t,w,w0,Q):
-    #t = float(t)
-    #w = float(w)
-    #w0 = float(w0)
-    #Q = float(Q)
     return np.e**(-w*t/(2*Q))*(-Xd(w,w0,Q)*np.sin(t*(w0 - w))**2 + Yd(w,w0,Q)*w/w0*np.cos(t*(w0 - w))**2)
 
 def yqfit(w, Q, w0 =300*2*np.pi):
@@ -64,6 +42,20 @@ def Qd(Qs,Qr):
     return tmp
 
 
+def pix2f(w):
+    '''
+    this little handy fuction simply returns a factor such that one can easily 
+    convert i.e. a frequency to number of points
+    it requires the array of frequency
+    then from the frequency span and number of points
+    it returns a factor describing the number of points required to change frequency by #1    
+    '''
+    w_span = w[-1]-w[0] #frequency range *2pi
+    w_p = len(w) #number of pixel
+    fpix = w_p/w_span #pixel required to shift freq by 1 MHz
+    return fpix
+
+
 #Equation for lowpass (returns a gaussian)
 #Doing the Lowpas in C,
 #Gaussian filtering can be implemented using recursion (Young & Vliet,
@@ -71,15 +63,17 @@ def Qd(Qs,Qr):
 #very accurate and does not introduce ringing. It is anti-causal
 #(forward-backward) and has zero phase response.
 #by using this correlation funcion from the scipy lib.
-
+'''
 def gaus(sigma=1,pos = 50, w = range(0,100)): 
     g1 = [1 / (sigma * np.sqrt(2*np.pi)) * np.e**(-float(x-pos)**2/(2*sigma**2)) for x in w]
     #g2 = np.ones([m,len(w)]);
     return g1 #zip(*g1*g2)
     #a gaussian 
 
-    
-'''
+  
+
+  
+
 from numpy import array, zeros, ones, flipud, fliplr
 from scipy.signal import lfilter
 from math import sqrt
