@@ -15,6 +15,7 @@ import numpy as np
 #from scipy.signal.convolve
 #import scipy.ndimage #The fastest filter
 import matplotlib.pyplot as pl #for debugging
+
 import equations as eq
 import mtxparser as mtx
 import simulation_functions as sim
