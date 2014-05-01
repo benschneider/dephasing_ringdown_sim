@@ -44,7 +44,9 @@ def Yr2(t,w,w0,Q):
     return np.e**(-w*t/(2*Q))*(-Xd(w,w0,Q)*np.sin(t*(w0 - w))**2 + Yd(w,w0,Q)*w/w0*np.cos(t*(w0 - w))**2)
 
 def yqfit(w, Q, w0 =300*2*np.pi):
-    ''' Equation for fitting (Spectral Q)'''
+    ''' Equation for fitting (Spectral Q)
+    returns -w0*w0*w0*w/Q/( (w0*w0-w*w)*(w0*w0-w*w) + w*w*w0*w0/Q/Q )    
+    '''
     #w0 = 300*2*np.pi; #at a fixed freq
     return -w0*w0*w0*w/Q/( (w0*w0-w*w)*(w0*w0-w*w) + w*w*w0*w0/Q/Q )
 
@@ -58,7 +60,7 @@ def Qd(Qs,Qr):
     ''' Equation returns an estimate for Qr to be used, 
     given an estimate to Qr for a given Qs and Qd 
     '''
-    tmp = 1.0/(1.0/float(Qs)-1.0/float(Qr))
+    tmp = 1.0/(1.0/float(Qs)-1.0/Qr)
     return tmp
 
 
