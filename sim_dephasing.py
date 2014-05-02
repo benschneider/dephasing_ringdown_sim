@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Ben Schneider
 
@@ -21,7 +22,8 @@ import matplotlib.pyplot as pl
 import equations as eq
 import mtxparser as mtx
 import simulation_functions as sim
-'''Note if debugging these files, better use execfile('...py') 
+'''
+Note if debugging these files, better use execfile('...py') 
 otherwise changes are updated only after a kernel restart
 still missing some pieces of code
 '''
@@ -31,7 +33,7 @@ still missing some pieces of code
 #output filenames
 filename1 = 'QsQr.txt'
 filename2 = 'qsfit.mtx'
-filename3 = 'qsfit.mtx'
+filename3 = 'qrfit.mtx'
 filename4 = 'sim_dephasing.mtx'
  
 #set variables
@@ -40,8 +42,8 @@ w0 = 300.0*2*np.pi
 
 #Ringdowntime in usec
 t_0 = -3 #start
-t_1 = int(Qs/w0*20.0) #stop
-t_p = 3001 #number of points
+t_1 = int(Qs/w0*30.0) #stop
+t_p = 2001 #number of points
 
 #Frequency in MHz
 span = w0/Qs*10
@@ -51,15 +53,15 @@ w_p = 1501
 
 #Ringdown Q factor range
 Qr_0 = Qs
-Qr_1 = Qs*30
-Qr_p = 3
+Qr_1 = Qs*40
+Qr_p = 2
 
 #make np arrays
 t  = np.linspace(t_0, t_1, t_p)
 w  = np.linspace(w_0, w_1, w_p)
 Qr = np.linspace(Qr_0, Qr_1, Qr_p)
 
-# -------- Start simulation and fitting ---------
+# -------- Simulation and fitting ---------
 
 #calculate required dephasing
 Qd = eq.Qd(Qs,Qr[1:]) #get array
@@ -67,12 +69,10 @@ Qd = eq.Qd(Qs,Qr[1:]) #get array
 #create non dephased matrix
 matrix = sim.get_ringdown_Y2(w, w0, t, Qr) 
 
-#normalize matrix
-matrix = sim.get_normed_matrix(matrix, Qr)
-
 #dephase matrix accordingly
 t1 = time()
-matrix = sim.get_dephased_matrix(matrix, Qd, w, method='lor')
+matrix = sim.get_dephased_matrix(matrix, Qd, w, method='lor') 
+#setting method to gaus uses a different method and is a lot faster
 print time()-t1
 
 #fit ringdown Q for each point of dephasing 
@@ -85,6 +85,9 @@ qrfit contains a 2d data with alternating lines
 containing the data and the fit 
 Qrs contains the Q factor and dephasng 
 '''
+
+#normalize matrix
+#matrix = sim.get_normed_matrix(matrix, Qr) #this messes up the fitting
 
 
 # ------- Save data into files --------

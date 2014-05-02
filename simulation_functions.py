@@ -6,11 +6,12 @@ Created on Tue Apr 29 15:42:37 2014
 
 - creates a 3d matrix.
 """
-import scipy.ndimage #a fast filter
-from scipy.optimize import curve_fit
+import scipy.ndimage
 import scipy.signal as signal
+from scipy.optimize import curve_fit
 import equations as eq
 import numpy as np
+
 
 def get_ringdown_X(w, w0, t, Q):
     X = np.zeros([len(w), len(t)]) #Get empty 2d Matrix
@@ -73,6 +74,9 @@ def get_ringdown_Y2(w, w0, t, Qr):
         matrix[k]  = get_ringdown_Y(w, w0, t, Q)
         k +=1
     return matrix
+#--------
+    
+
 
 def get_dephased_matrix(matrix, dephasing, w, method='gaus'):
     ''' method can be gausian dephasing or resonator lorenzian like dephasing.
@@ -85,12 +89,13 @@ def get_dephased_matrix(matrix, dephasing, w, method='gaus'):
         matrix = _get_dephased_matrix_gaus(matrix, dephasing, w)
     return matrix
     
-def _get_dephased_matrix_lor(matrix, dephasing, w):    
+def _get_dephased_matrix_lor(matrix, dephasing, w, adj = 1000/np.pi**2):    
     ''' dephasing convolved with a resonator like line shape'''
     k = 1
     for Qd in dephasing:
         filter2d =  filter2d_lor(w,Qd) #crop = int(matrix.shape[1]/3))    
         matrix[k] = signal.convolve2d(matrix[k], filter2d, mode = 'same') #and here python commits suicide...
+        matrix[k] = matrix[k]/adj #for debuging 
         k += 1
     return matrix
 
@@ -113,9 +118,9 @@ def filter2d_lor(w, Qd, crop = 0):
     ''' -
     w is the list of frequencies
     Qd the dephasing Q factor 
-    and crop != 0 crops from both ends points
+    if crop != 0 it crops from both ends points
     '''
-    function = -eq.yqfit(w, Qd) #obtain a lorenzian line shape
+    function = eq.yqfit(w, Qd) #obtain a lorenzian line shape
     function = -function/Qd
     #this simply crops off the edges of the filter    
     if crop > 0:
@@ -130,6 +135,7 @@ def filter2d_lor(w, Qd, crop = 0):
     return np.array(filter2d)
 
 
+#--------
 def get_normed_matrix(matrix, Qr):
     '''
     this function simply normalized the matrix using its Q-factors
@@ -189,7 +195,7 @@ def fit_matrix_spectral(w, matrix):
         #Fit data to eq.yfit
         temp3 = zip(*matrix[k])
         Spectral = temp3[0]
-        spopt[k], spcov[k] = curve_fit(eq.yqfit, w, Spectral, p0=6000, 
+        spopt[k], spcov[k] = curve_fit(eq.yqfit, w, Spectral, p0=1500, 
                                                     sigma=None, maxfev=5000)
         
         #Create fitted function:
