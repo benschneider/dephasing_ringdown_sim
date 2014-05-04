@@ -13,17 +13,17 @@ import equations as eq
 import numpy as np
 
 
-def get_ringdown_X(w, w0, t, Q):
-    X = np.zeros([len(w), len(t)]) #Get empty 2d Matrix
+def get_ringdown_X(w_array, w_res, t, Q):
+    X = np.zeros([len(w_array), len(t)]) #Get empty 2d Matrix
     ''' creates first matrix without any dephasing
     This creates the X quadrature output of a lockin measuring 
     the mechancal ringdown.
     '''
     i = 0
-    for f in w:
-        Xrd = eq.Xr(t, f, w0, Q) #a ringdown list 10,9,8,7,5,4,2...0
+    for f in w_array:
+        Xrd = eq.Xr(t, f, w_res, Q) #a ringdown list 10,9,8,7,5,4,2...0
         
-        val1 = eq.Xr2(0, f, w0, Q) #eq.Yr(0, f, w0, Q)
+        val1 = eq.Xr2(0, f, w_res, Q) #eq.Yr(0, f, w_res, Q)
         j = 0
         while t[j] < 0:
             Xrd[j] = val1
@@ -34,25 +34,25 @@ def get_ringdown_X(w, w0, t, Q):
         i += 1
     return X
 
-def get_ringdown_X2(w, w0, t, Qr):
-    matrix = np.zeros((len(Qr), len(w), len(t))) #The result matrix    
+def get_ringdown_X2(w_array, w_res, t, Qr):
+    matrix3d = np.zeros((len(Qr), len(w_array), len(t))) #The result matrix    
     k = 0    
     for Q in Qr:
-        matrix[k]  = get_ringdown_X(w, w0, t, Q)
+        matrix3d[k]  = get_ringdown_X(w_array, w_res, t, Q)
         k +=1
-    return matrix
+    return matrix3d
 
-def get_ringdown_Y(w, w0, t, Q, norm = False):
-    Y = np.zeros([len(w), len(t)]) #Get empty 2d Matrix
+def get_ringdown_Y(w_array, w_res, t, Q, norm = False):
+    Y = np.zeros([len(w_array), len(t)]) #Get empty 2d Matrix
     ''' creates first matrix without any dephasing
     This creates the Y quadrature output of a lockin measuring 
     the mechancal ringdown.
     '''
     i = 0
-    for f in w:
-        Yrd = eq.Yr(t, f, w0, Q) #a ringdown list 10,9,8,7,5,4,2...0
+    for f in w_array:
+        Yrd = eq.Yr(t, f, w_res, Q) #a ringdown list 10,9,8,7,5,4,2...0
 
-        val1 = eq.Yr2(0, f, w0, Q) #eq.Yr(0, f, w0, Q)
+        val1 = eq.Yr2(0, f, w_res, Q) #eq.Yr(0, f, w_res, Q)
         j = 0
         while t[j] < 0:
             Yrd[j] = val1
@@ -67,61 +67,73 @@ def get_ringdown_Y(w, w0, t, Q, norm = False):
 
     return Y
 
-def get_ringdown_Y2(w, w0, t, Qr):
-    matrix = np.zeros((len(Qr), len(w), len(t))) #The result matrix    
+def get_ringdown_matrix_Y(w_array, w_res, t, Qr_array):
+    matrix3d = np.zeros((len(Qr_array), len(w_array), len(t))) #The result matrix    
     k = 0
-    for Q in Qr:
-        matrix[k]  = get_ringdown_Y(w, w0, t, Q)
+    for Q in Qr_array:
+        matrix3d[k]  = get_ringdown_Y(w_array, w_res, t, Q)
         k +=1
-    return matrix
-#--------
-    
+    return matrix3d
+#-------- Convolution function
+#-------- calculate dephasing     
 
 
-def get_dephased_matrix(matrix, dephasing, w, method='gaus'):
-    ''' method can be gausian dephasing or resonator lorenzian like dephasing.
+def get_dephased_matrix(matrix3d, dephasing, w_array, method='gaus'):
+    ''' matrix is a 3d np.array, have 2-d maps which require different dephasing 
+        method can be gausian dephasing or resonator lorenzian like dephasing.
         method = 'gaus' > gaussian dehasing
         method = 'lor'  > lor like shape dephasing
     '''
     if method == 'lor':
-        matrix = _get_dephased_matrix_lor(matrix, dephasing, w)
+        matrix3d = _get_dephased_matrix_lor(matrix3d, dephasing, w_array)
     elif method == 'gaus':
-        matrix = _get_dephased_matrix_gaus(matrix, dephasing, w)
-    return matrix
+        matrix3d = _get_dephased_matrix_gaus(matrix3d, dephasing, w_array)
+    return matrix3d
     
-def _get_dephased_matrix_lor(matrix, dephasing, w, adj = 1000/np.pi**2):    
+def _get_dephased_matrix_lor(matrix3d, dephasing, w_array): 
     ''' dephasing convolved with a resonator like line shape'''
     k = 1
     for Qd in dephasing:
-        filter2d =  filter2d_lor(w,Qd) #crop = int(matrix.shape[1]/3))    
-        matrix[k] = signal.convolve2d(matrix[k], filter2d, mode = 'same') #and here python commits suicide...
-        matrix[k] = matrix[k]/adj #for debuging 
+        filter2d =  filter2d_lor(w_array,Qd)#,crop = int(matrix3d.shape[1]/2.05))    
+        matrix3d[k] = signal.convolve2d(matrix3d[k], filter2d, mode = 'same') #and here python commits suicide...
+        #matrix3d[k] = matrix3d[k]/adj #for debuging of the convolution function 
         k += 1
-    return matrix
+    return matrix3d
 
-def _get_dephased_matrix_gaus(matrix, dephasing, w):
+def _get_dephased_matrix_gaus(matrix3d, dephasing, w_array):
     ''' dephasing convolved with a gaussian line shape
     This function is a lot faster!    
     '''
     k = 1
-    w0 = w.mean() #resonance frequency    
-    fpix = eq.pix2f(w) #(pixel/frequency)
+    w_res = w_array.mean() #resonance frequency    
+    fpix = eq.pix2f(w_array) #(pixel/frequency)
     for Qd in dephasing:
-        FWHM = w0/Qd #width in freq for given Q
+        FWHM = w_res/Qd #width in freq for given Q
         pixel = FWHM*fpix/2  #in terms of number of pixel
-        matrix[k] = scipy.ndimage.filters.gaussian_filter(matrix[0], (pixel, 0))
+        matrix3d[k] = scipy.ndimage.filters.gaussian_filter(matrix3d[0], (pixel, 0))
         k += 1
-    return matrix
+    return matrix3d
+
+def get_matrix_lockin_convolved(matrix3d, func):
+    '''convolve a 3d-matrix with a function'''
+    k= 0
+    
+    matrix3d[k] = signal.convolve2d(matrix3d[k], func, mode = 'same') #and here python commits suicide...
+    return matrix3d
+
+
+#-------- Filter functions
 
 # for a range of Qr and a fixed assumed Qs
-def filter2d_lor(w, Qd, crop = 0):
+def filter2d_lor(w_array, Qd, crop = 0):
     ''' -
-    w is the list of frequencies
+    w_array is the list of frequencies
     Qd the dephasing Q factor 
     if crop != 0 it crops from both ends points
     '''
-    function = eq.yqfit(w, Qd) #obtain a lorenzian line shape
+    function = eq.yqfit(w_array, Qd) #obtain a lorenzian line shape
     function = -function/Qd
+    function = norm_filter(function) #normalize filter
     #this simply crops off the edges of the filter    
     if crop > 0:
         function = function[crop:-crop]
@@ -135,28 +147,49 @@ def filter2d_lor(w, Qd, crop = 0):
     return np.array(filter2d)
 
 
-#--------
-def get_normed_matrix(matrix, Qr):
+def norm_filter(filterfun):
+    '''
+    go across each element and adds them
+    this value is then subtracted from the filter function
+    (N = integral{(-inf) to (+inf)}{function})
+    '''
+    N = 0
+    for i in range(0,len(filterfun)):
+        N += filterfun[i]
+
+    return filterfun/N
+
+
+#-------- for testing
+def get_normed_matrix(matrix3d, Qr):
     '''
     this function simply normalized the matrix using its Q-factors
     '''
     k = 0    
     for Q in Qr:
-        matrix[k] = matrix[k] / Q
+        matrix3d[k] = matrix3d[k] / Q
         k += 1
-    return matrix
+    return matrix3d
+#------- 
+'''
+extract lockin-filter
+'''
 
+'''
+convolve matrix with lockin filter
+'''
 
-def fit_mat_ringdown(t, matrix):
+#---------
+def fit_mat_ringdown(t, matrix3d):
     '''  Fit the created ringdown matrix, 
     it will assume a matrix with the following shape and form: 
     and then return a result matrix
     '''
-    num_dephasing = matrix.shape[0]
-    num_freq = matrix.shape[1]
+    num_dephasing = matrix3d.shape[0]
+    num_freq = matrix3d.shape[1]
     
     #get position where t = 0
-    t0_index = int(-t[0]/((t[-1] - t[0])/matrix.shape[2])) 
+    t0_index = int(-t[0]/((t[-1] - t[0])/matrix3d.shape[2])) 
 
     rpopt = np.zeros([num_dephasing, 3])
     rpcov = np.zeros([num_dephasing, 3, 3])
@@ -164,7 +197,7 @@ def fit_mat_ringdown(t, matrix):
 
     for k in range(0, num_dephasing):
         #Fit data to eq.expfit
-        Ringdown = matrix[k][num_freq/2]
+        Ringdown = matrix3d[k][num_freq/2]
         rpopt[k], rpcov[k] = curve_fit(eq.expfit, t[t0_index:-1], Ringdown[t0_index:-1],
                     p0=(6000, -6000, 1), sigma=None, maxfev=5000)
 
@@ -179,27 +212,27 @@ def fit_mat_ringdown(t, matrix):
     Qrs = zip(*rpopt)
     return Qrs, qrfit
    
-def fit_matrix_spectral(w, matrix):
+def fit_matrix_spectral(w_array, matrix3d):
     '''  Fit the created ringdown matrix, 
     it will assume a matrix with the following shape and form: ...
     output:
     fit results Q factor per dephasing
     matrix containing the fit and dephasing positions used
     '''
-    num_dephasing = matrix.shape[0]
+    num_dephasing = matrix3d.shape[0]
     spopt = np.zeros([num_dephasing, 1])
     spcov = np.zeros([num_dephasing, 1, 1])
-    qsfit = np.zeros([1, num_dephasing*2, len(w)])
+    qsfit = np.zeros([1, num_dephasing*2, len(w_array)])
 
     for k in range(0, num_dephasing):
         #Fit data to eq.yfit
-        temp3 = zip(*matrix[k])
+        temp3 = zip(*matrix3d[k])
         Spectral = temp3[0]
-        spopt[k], spcov[k] = curve_fit(eq.yqfit, w, Spectral, p0=1500, 
+        spopt[k], spcov[k] = curve_fit(eq.yqfit, w_array, Spectral, p0=1500, 
                                                     sigma=None, maxfev=5000)
         
         #Create fitted function:
-        fited = eq.yqfit(w, spopt[k])
+        fited = eq.yqfit(w_array, spopt[k])
         
         #store data plus fit lines
         qsfit[0][k*2] = Spectral
