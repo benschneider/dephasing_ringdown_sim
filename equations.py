@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-#from numpy import sin, cos, e, sqrt, pi
 import numpy as np
 #def hho(w,w0,q):
 #  return w0*w0/(w0*w0-w*w + i*w*w0/Q)
