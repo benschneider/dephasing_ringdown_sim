@@ -15,11 +15,13 @@ def Xr(t,w,w0,Q):
 def Yr(t,w,w0,Q):
     return np.e**(-w*t/(2*Q))*(-Xd(w,w0,Q)*np.sin(t*(w0 - w)) + Yd(w,w0,Q)*w/w0*np.cos(t*(w0 - w)))
 
+'''
 def Xr2(t,w,w0,Q):
     return np.e**(-w*t/(2*Q))*(Xd(w,w0,Q)*np.cos(t*(w0 - w))**2 + Yd(w,w0,Q)*w/w0*np.sin(t*(w0 - w))**2)
 
 def Yr2(t,w,w0,Q):
     return np.e**(-w*t/(2*Q))*(-Xd(w,w0,Q)*np.sin(t*(w0 - w))**2 + Yd(w,w0,Q)*w/w0*np.cos(t*(w0 - w))**2)
+'''
 
 def yqfit(w, Q, w0 = 300*2*np.pi):
     ''' 

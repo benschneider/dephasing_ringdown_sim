@@ -84,8 +84,8 @@ lockin_filter = sim.filter2d_lockin(lockin_response) #calculate and return a nor
 #the following is done by manual selection
 #pl.plot(lockin_filter[207:207+t_p])
 
-filtfun = lockin_filter[207:207+t_p]
-
+#filtfun = lockin_filter[207:207+t_p]
+filtfun = lockin_filter
 tmp = np.zeros([1,len(filtfun)]) #store filter in the right format
 for j in range(0, tmp.shape[0]):
     tmp[j] = filtfun #store normalized filte
@@ -148,7 +148,7 @@ data_off = data_off/data_off.max()
 data_filt = -np.diff(data_off,1) #obtain Filter
 data_filt2 = data_filt[2000:4000] #croped for this particular data set
 
-#averaging and croping some parts of the filter
+#averaging and croping some parts of a filter
 fact = 1
 a = np.zeros(len(t)/fact)
 a = np.array(a)

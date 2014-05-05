@@ -23,7 +23,7 @@ def get_ringdown_X(w_array, w_res, t, Q):
     for f in w_array:
         Xrd = eq.Xr(t, f, w_res, Q) #a ringdown list 10,9,8,7,5,4,2...0
         
-        val1 = eq.Xr2(0, f, w_res, Q) #eq.Yr(0, f, w_res, Q)
+        val1 = eq.Xr(0, f, w_res, Q) #eq.Yr(0, f, w_res, Q)
         j = 0
         while t[j] < 0:
             Xrd[j] = val1
@@ -52,7 +52,7 @@ def get_ringdown_Y(w_array, w_res, t, Q, norm = False):
     for f in w_array:
         Yrd = eq.Yr(t, f, w_res, Q) #a ringdown list 10,9,8,7,5,4,2...0
 
-        val1 = eq.Yr2(0, f, w_res, Q) #eq.Yr(0, f, w_res, Q)
+        val1 = eq.Yr(0, f, w_res, Q) #eq.Yr(0, f, w_res, Q)
         j = 0
         while t[j] < 0:
             Yrd[j] = val1
@@ -131,7 +131,7 @@ def filter2d_lockin(lockin_response):
     lockin_output = lockin_response[0] - lockin_response[0].min()
     lockin_output = lockin_output/lockin_output.max()
     raw_filter = diff_acurate(lockin_output) #calc derivative
-    return norm_filter(raw_filter)
+    return norm_filter(raw_filter[1:-1])
     
 
 
