@@ -20,7 +20,7 @@ from time import time
 import matplotlib.pyplot as pl 
 
 #import equations as eq
-import mtxparser as mtx
+import parsers as parser
 import simulation_functions as sim
 '''
 Note if debugging these files, better use execfile('...py') 
@@ -31,19 +31,22 @@ still missing some pieces of code
 # -------- Set variabes preperation for simulation ---------
 
 #output filenames
-filename1 = 'QsQr.txt'
-filename2 = 'qsfit.mtx'
-filename3 = 'qrfit.mtx'
-filename4 = 'sim_dephasing.mtx'
+filename1 = 'QsQr2.txt'
+filename2 = 'qsfit2.mtx'
+filename3 = 'qrfit2.mtx'
+filename4 = 'sim_dephasing2.mtx'
  
+#input filename
+filename_lockinfilter = 'experimental/1_2_filt8.Wfm.csv' #100us long 1000pt res
+
 #set variables
 Qs = 1500
 w_res = 300.0*2*np.pi
 
 #Ringdowntime in usec
-t_0 = -3 #start
+t_0 = -17 #start
 t_1 = int(Qs/w_res*30.0) #stop
-t_p = 2001 #number of points
+t_p = 400 #number of points
 
 #Frequency in MHz
 span = w_res/Qs*10
@@ -53,8 +56,8 @@ w_p = 1501
 
 #Ringdown Q factor range
 Qr_0 = Qs
-Qr_1 = Qs*40
-Qr_p = 41
+Qr_1 = Qs*10
+Qr_p = 5
 
 #make np arrays
 t_array  = np.linspace(t_0, t_1, t_p)
@@ -70,15 +73,31 @@ Qd_array = sim.eq.Qd(Qs,Qr_array[1:])
 matrix3d = sim.get_ringdown_matrix_Y(w_array, w_res, t_array, Qr_array) 
 
 t1 = time()
-#dephase matrix:
+print 'dephase matrix'
 matrix3d = sim.get_dephased_matrix(matrix3d, Qd_array, w_array, method='lor') 
 #setting method to gaus uses a different method and is a lot faster
 print time()-t1
 
-#extract lockin filter function:
-#convolve matrix with filter function:
+#grab lockin response and extract lockin filter function:
+lockin_response = parser.loadcsv(filename_lockinfilter)
+lockin_filter = sim.filter2d_lockin(lockin_response) #calculate and return a normalized filter
+#the following is done by manual selection
+#pl.plot(lockin_filter[207:207+t_p])
 
-#fit ringdown/spectral Q for each point of dephasing: 
+filtfun = lockin_filter[207:207+t_p]
+
+tmp = np.zeros([1,len(filtfun)]) #store filter in the right format
+for j in range(0, tmp.shape[0]):
+    tmp[j] = filtfun #store normalized filte
+
+filtfun = tmp
+
+print 'convolve matrix with filter function'
+matrix3d = sim.get_matrix_lockin_convolved(matrix3d, filtfun)
+
+
+
+print 'fit ringdown/spectral Q for each point of dephasing'
 Qrs, qrfit = sim.fit_mat_ringdown(t_array, matrix3d) 
 Qsp, qsfit = sim.fit_matrix_spectral(w_array, matrix3d) 
 
@@ -89,12 +108,12 @@ Qrs contains the Q factor and dephasng
 '''
 
 
-# ------- Save data into files --------
+print ' ------- Save data into files --------'
 
 
 #save fiting results into dat file
 stuff = (Qr_array, Qrs[0], Qsp[0])
-mtx.savedat(filename1, stuff, delimiter='\t') 
+parser.savedat(filename1, stuff, delimiter='\t') 
 
 #Save the Spectral fitting matix into one MTX file
 #header file
@@ -102,21 +121,21 @@ head = ['Units', 'Qs_fits',
         'RF frequency (MHz)', str(w_array[0]/2/np.pi), str(w_array[-1]/2/np.pi),
         'Ringd_Q', str(Qr_array[-1]) , str(Qr_array[0]),
         'none', '0', '1']
-mtx.savemtx(filename2, qsfit, header=head) #save in MTX format
+parser.savemtx(filename2, qsfit, header=head) #save in MTX format
 
 #Save the Ringdown fitting matix into one MTX file
 head = ['Units', 'Qs_fits',
         'Time (us)', str(t_array[0]), str(t_array[-1]),
         'Ringd_Q', str(Qr_array[-1]) , str(Qr_array[0]),
         'none', '0', '1']
-mtx.savemtx(filename3, qrfit, header=head)
+parser.savemtx(filename3, qrfit, header=head)
 
 #Save the dephasing matix into another MTX file
 head = ['Units', 'X Y R [V]#values',
         'Time (us)', str(t_array[0]), str(t_array[-1]),
         'RF frequency (MHz)', str(w_array[-1]/2/np.pi), str(w_array[0]/2/np.pi),
         'Ringd_Q', str(Qr_array[0]), str(Qr_array[-1])]
-mtx.savemtx(filename4, matrix3d, header = head)
+parser.savemtx(filename4, matrix3d, header = head)
 
 
 

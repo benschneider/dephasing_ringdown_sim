@@ -98,6 +98,7 @@ def _get_dephased_matrix_lor(matrix3d, dephasing, w_array):
         matrix3d[k] = signal.convolve2d(matrix3d[k], filter2d, mode = 'same') #and here python commits suicide...
         #matrix3d[k] = matrix3d[k]/adj #for debuging of the convolution function 
         k += 1
+        print str(100.0*k/(matrix3d.shape[0]+1)) + ' %'
     return matrix3d
 
 def _get_dephased_matrix_gaus(matrix3d, dephasing, w_array):
@@ -114,15 +115,43 @@ def _get_dephased_matrix_gaus(matrix3d, dephasing, w_array):
         k += 1
     return matrix3d
 
-def get_matrix_lockin_convolved(matrix3d, func):
+def get_matrix_lockin_convolved(matrix3d, filtfun):
     '''convolve a 3d-matrix with a function'''
-    k= 0
-    
-    matrix3d[k] = signal.convolve2d(matrix3d[k], func, mode = 'same') #and here python commits suicide...
+    for k in range(0,matrix3d.shape[0]):
+        matrix3d[k] = signal.convolve2d(matrix3d[k], filtfun, mode = 'same') #AAAARGGHHH!!!!.... this takes too long
+        print str(100.0*k/(matrix3d.shape[0]-1)) + ' %'
     return matrix3d
 
 
 #-------- Filter functions
+def filter2d_lockin(lockin_response):
+    #norm signal
+    #lockin_input = lockin_response[1] - lockin_response[1].min()
+    #lockin_input = lockin_input/lockin_input.max()
+    lockin_output = lockin_response[0] - lockin_response[0].min()
+    lockin_output = lockin_output/lockin_output.max()
+    raw_filter = diff_acurate(lockin_output) #calc derivative
+    return norm_filter(raw_filter)
+    
+
+
+#    tmp = np.zeros([1,len(raw_filter)]) #store filter in the right format
+#    for j in range(0, tmp.shape[0]):
+#        tmp[j] = norm_filter(raw_filter) #store normalized filter
+
+
+def diff_acurate(a):
+    '''
+    create an position accurate forward derivative (using 3 points)    
+    this works on 1 and 2 dim arrays
+    takes the derivative from left to right
+    '''
+    tmp_m = np.concatenate( ([ [a.transpose()[0]], a.transpose(), [a.transpose()[-1]]  ]) ,axis = 0)
+    tmp_1 = np.concatenate( ([ [a.transpose()[0]], [a.transpose()[0]], a.transpose()   ]) ,axis = 0)
+    tmp_2 = np.concatenate( ([ a.transpose(), [a.transpose()[-1]], [a.transpose()[-1]] ]) ,axis = 0)
+    tmp_diff = ((tmp_2 - tmp_m) + (tmp_m -tmp_1))/2.0
+    return tmp_diff.transpose()
+
 
 # for a range of Qr and a fixed assumed Qs
 def filter2d_lor(w_array, Qd, crop = 0):
@@ -143,8 +172,8 @@ def filter2d_lor(w_array, Qd, crop = 0):
     for j in range(0, filter2d.shape[0]):
         filter2d[j] = function
         
-    filter2d = zip(*filter2d) #rotate
-    return np.array(filter2d)
+    filter2d = filter2d.transpose()
+    return filter2d
 
 
 def norm_filter(filterfun):
@@ -209,7 +238,7 @@ def fit_mat_ringdown(t, matrix3d):
         qrfit[0][k*2] = Ringdown
         qrfit[0][k*2+1] = fited
 
-    Qrs = zip(*rpopt)
+    Qrs = rpopt.transpose()
     return Qrs, qrfit
    
 def fit_matrix_spectral(w_array, matrix3d):
@@ -226,7 +255,7 @@ def fit_matrix_spectral(w_array, matrix3d):
 
     for k in range(0, num_dephasing):
         #Fit data to eq.yfit
-        temp3 = zip(*matrix3d[k])
+        temp3 = matrix3d[k].transpose()
         Spectral = temp3[0]
         spopt[k], spcov[k] = curve_fit(eq.yqfit, w_array, Spectral, p0=1500, 
                                                     sigma=None, maxfev=5000)
@@ -238,5 +267,5 @@ def fit_matrix_spectral(w_array, matrix3d):
         qsfit[0][k*2] = Spectral
         qsfit[0][k*2+1] = fited
 
-    Qsp = zip(*spopt)    
+    Qsp = spopt.transpose()   
     return Qsp, qsfit

@@ -18,6 +18,7 @@ missing:
 '''
 import numpy as np
 from struct import pack, unpack
+import csv
 
 def loaddat(*inputs):
     '''
@@ -55,6 +56,13 @@ def savedat(filename1,data1,**quarks):
     else:
         np.savetxt(filename1, data1 , delimiter = ',', **quarks)    
 
+def loadcsv(filename, delim =';'):
+    #open file (using with to make sure file is closed afer use)
+    with open(filename, 'Ur') as f:
+        #collect tuples as a list in data, then convert to an np.array and return
+        data = list(tuple(rec) for rec in csv.reader(f, delimiter=delim))
+        data = np.array(data, dtype=float)
+    return data.transpose()
     
     
 def loadmtx(filename):
@@ -69,18 +77,19 @@ def loadmtx(filename):
     mtx     :   will contain a 3d numpy array of the data
     header  :   will contain information on the labels and limits
     '''
-    f = open(filename, 'rb')
+    with open(filename, 'rb') as f:
 
-    line = f.readline()
-    header = line[:-1].split(',')
-    #header = line
-
-    line = f.readline()
-    a = line[:-1].split(' ')
-    s = np.array(map(float, a))
-
-    raw = f.read() #reads everything else
-    f.close()
+        line = f.readline()
+        header = line[:-1].split(',')
+        #header = line
+    
+        line = f.readline()
+        a = line[:-1].split(' ')
+        s = np.array(map(float, a))
+    
+        raw = f.read() #reads everything else
+        f.close()
+        
     if s[3] == 4:
         data = unpack('f'*(s[2]*s[1]*s[0]), raw) #uses float
         M = np.reshape(data, (s[2], s[1], s[0]), order="F")
@@ -89,7 +98,7 @@ def loadmtx(filename):
         M = np.reshape(data, (s[2], s[1], s[0]), order="F")
     return M, header
 
-#note reshape modes:
+#note: reshape modes
 #a
 #Out[133]:
 # array([[1, 2, 3],
@@ -139,23 +148,21 @@ def savemtx(filename, *data, **quarks):
                 'Z-label', '0', '1']
     savemtx('myfile.mtx',my-3d-array, header = myheader)    
     '''
-
-    f = open(filename, 'wb')
-
-    if 'header' in quarks:
-        header = ",".join(quarks['header']) #write the header in the first line
-        f.write(header +'\n')
-    else:
-        f.write(header +'\n')
-        
-    s = len(data[0][0][0]), len(data[0][0]), len(data[0]), 8 #(x ,y ,z , 8)
-    line = " ".join(str(b) for b in s) #'x y z 8'
-    f.write(line +'\n')  #'x y z 8 \n'
-
-    M = data[0]
-    if  len(s) == 4:
-        raw2 = np.reshape(M, s[2]*s[1]*s[0], order="F")
-        raw = pack('%sd' % len(raw2), *raw2)
-        f.write(raw)
-
-    f.close()
+    with open(filename, 'wb') as f:
+        if 'header' in quarks:
+            header = ",".join(quarks['header']) #write the header in the first line
+            f.write(header +'\n')
+        else:
+            f.write(header +'\n')
+            
+        s = len(data[0][0][0]), len(data[0][0]), len(data[0]), 8 #(x ,y ,z , 8)
+        line = " ".join(str(b) for b in s) #'x y z 8'
+        f.write(line +'\n')  #'x y z 8 \n'
+    
+        M = data[0]
+        if  len(s) == 4:
+            raw2 = np.reshape(M, s[2]*s[1]*s[0], order="F")
+            raw = pack('%sd' % len(raw2), *raw2)
+            f.write(raw)
+    
+        f.close()

@@ -3,3 +3,7 @@ QsQr.txt
 *.mtx
 
 *.pyc
+
+*.txt
+
+lockin-convolution.py
