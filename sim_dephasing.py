@@ -96,9 +96,11 @@ print 'convolve matrix with filter function'
 matrix3d = sim.get_matrix_lockin_convolved(matrix3d, filt_fun)
 #A = sim.convolution_1d(matrix3d[0],filt_fun)
 
+'''
 print 'fit ringdown/spectral Q for each point of dephasing'
 Qrs, qrfit = sim.fit_mat_ringdown(t_array, matrix3d) 
 Qsp, qsfit = sim.fit_matrix_spectral(w_array, matrix3d) 
+'''
 
 ''' 
 qrfit contains a 2d data with alternating lines 
@@ -109,7 +111,7 @@ Qrs contains the Q factor and dephasng
 
 print ' ------- Save data into files --------'
 
-
+'''
 #save fiting results into dat file
 stuff = (Qr_array, Qrs[0], Qsp[0])
 parser.savedat(filename1, stuff, delimiter='\t') 
@@ -128,8 +130,9 @@ head = ['Units', 'Qs_fits',
         'Ringd_Q', str(Qr_array[-1]) , str(Qr_array[0]),
         'none', '0', '1']
 parser.savemtx(filename3, qrfit, header=head)
+'''
 
-#Save the dephasing matix into another MTX file
+#Save the dephasing matix as MTX file
 head = ['Units', 'X Y R [V]#values',
         'Time (us)', str(t_array[0]), str(t_array[-1]),
         'RF frequency (MHz)', str(w_array[-1]/2/np.pi), str(w_array[0]/2/np.pi),
