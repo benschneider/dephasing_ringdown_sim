@@ -84,18 +84,17 @@ lockin_filter = sim.filter2d_lockin(lockin_response) #calculate and return a nor
 #the following is done by manual selection
 #pl.plot(lockin_filter[207:207+t_p])
 
-filtfun = lockin_filter[207:207+t_p]
+filt_fun = lockin_filter[207:207+t_p]
 #filtfun = lockin_filter
-tmp = np.zeros([1,len(filtfun)]) #store filter in the right format
-for j in range(0, tmp.shape[0]):
-    tmp[j] = filtfun #store normalized filte
-
-filtfun = tmp
+#tmp = np.zeros([1,len(filtfun)]) #store filter in the right format
+#for j in range(0, tmp.shape[0]):
+#    tmp[j] = filtfun #store normalized filte
+#
+#filtfun = tmp
 
 print 'convolve matrix with filter function'
-matrix3d = sim.get_matrix_lockin_convolved(matrix3d, filtfun)
-
-
+matrix3d = sim.get_matrix_lockin_convolved(matrix3d, filt_fun)
+#A = sim.convolution_1d(matrix3d[0],filt_fun)
 
 print 'fit ringdown/spectral Q for each point of dephasing'
 Qrs, qrfit = sim.fit_mat_ringdown(t_array, matrix3d) 

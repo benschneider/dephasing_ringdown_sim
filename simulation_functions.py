@@ -115,16 +115,21 @@ def _get_dephased_matrix_gaus(matrix3d, dephasing, w_array):
         k += 1
     return matrix3d
 
-def get_matrix_lockin_convolved(matrix3d, filtfun):
+def get_matrix_lockin_convolved(matrix3d, filt_fun):
     '''convolve a 3d-matrix with a function'''
     for k in range(0,matrix3d.shape[0]):
-        matrix3d[k] = signal.convolve2d(matrix3d[k], filtfun, mode = 'same') #AAAARGGHHH!!!!.... this takes too long
+        matrix3d[k] = convolution_1d(matrix3d[k], filt_fun)
+        #signal.convolve2d(matrix3d[k], filtfun, mode = 'same') #AAAARGGHHH!!!!.... this takes too long
         print str(100.0*k/(matrix3d.shape[0]-1)) + ' %'
     return matrix3d
 
 
 #-------- Filter functions
+
 def filter2d_lockin(lockin_response):
+    '''
+    is used to extract lockin-filter
+    '''
     #norm signal
     #lockin_input = lockin_response[1] - lockin_response[1].min()
     #lockin_input = lockin_input/lockin_input.max()
@@ -199,14 +204,50 @@ def get_normed_matrix(matrix3d, Qr):
         matrix3d[k] = matrix3d[k] / Q
         k += 1
     return matrix3d
-#------- 
-'''
-extract lockin-filter
-'''
+#------- Convolution functions
 
-'''
-convolve matrix with lockin filter
-'''
+def convolution_1d(data2d, filt_fun):
+    tmp = data2d
+    for j in range(0,len(tmp)):
+        tmp[j] = _convolution(tmp[j], filt_fun)
+    return tmp
+
+def _convolution(data, filt_func):
+    '''
+    This function does calculate a 1D convolution
+    ,the goal is to test a convolution method.
+    (it is not yet optimized for speed)
+    expected input: func is the data to be processed 
+    and filt_func is the filter to be used
+    '''
+    length = len(data)
+    filt_new = _get_convolution_filter(filt_func,length)
+    #new_filt =  [0,0,0,0,0,0,0.5,1,0.5,0,0,0,0,0,0]
+    filt_length = len(filt_func)
+    
+    #dim1 = (len(data)+filt_length)
+    
+    dim2 = len(data)
+    test_array = np.zeros([dim2,dim2])
+
+    for i in range(0,dim2):
+        #for each element in data do
+        filt_start = length+filt_length/2-i
+        filt_stop  = (2*length+filt_length/2-i)
+        filt_window = filt_new[filt_start:filt_stop]
+        #print filt_window        
+        test_array[i] = filt_window*data[i]
+    
+    data_convolved = test_array.sum(0) 
+    return data_convolved
+    
+def _get_convolution_filter(filt_func,length):
+    '''puts the filter in the center and adds sufficient zeros at either side'''
+    #length = len(filt_func)
+    a = np.array([0]*length)
+    b = np.array([0]*(length+1))    
+    new_filt = np.concatenate((a,filt_func,b), axis = 0)
+    return new_filt
 
 #---------
 def fit_mat_ringdown(t, matrix3d):
