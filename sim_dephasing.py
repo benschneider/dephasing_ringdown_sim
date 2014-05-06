@@ -84,7 +84,7 @@ lockin_filter = sim.filter2d_lockin(lockin_response) #calculate and return a nor
 #the following is done by manual selection
 #pl.plot(lockin_filter[207:207+t_p])
 
-filt_fun = lockin_filter #[207:207+t_p]
+filt_fun = lockin_filter[0:450] #[207:207+t_p]
 #filtfun = lockin_filter
 #tmp = np.zeros([1,len(filtfun)]) #store filter in the right format
 #for j in range(0, tmp.shape[0]):
