@@ -44,9 +44,9 @@ Qs = 1500
 w_res = 300.0*2*np.pi
 
 #Ringdowntime in usec
-t_0 = -37 #start
-t_1 = int(Qs/w_res*30.0) #stop
-t_p = 700 #number of points
+t_0 = -40 #start
+t_1 = 40 #int(Qs/w_res*30.0) #stop
+t_p = 801 #number of points
 
 #Frequency in MHz
 span = w_res/Qs*10

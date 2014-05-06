@@ -98,7 +98,7 @@ def _get_dephased_matrix_lor(matrix3d, dephasing, w_array):
         matrix3d[k] = signal.convolve2d(matrix3d[k], filter2d, mode = 'same') #and here python commits suicide...
         #matrix3d[k] = matrix3d[k]/adj #for debuging of the convolution function 
         k += 1
-        print str(100.0*(k+1)/(matrix3d.shape[0])) + ' %'
+        print str(100.0*k/(matrix3d.shape[0])) + ' %'
     return matrix3d
 
 def _get_dephased_matrix_gaus(matrix3d, dephasing, w_array):
@@ -209,7 +209,7 @@ def get_normed_matrix(matrix3d, Qr):
 def convolution_1d(data2d, filt_fun):
     tmp = data2d
     for j in range(0,len(tmp)):
-        tmp[j] = _convolution(tmp[j], filt_fun)
+        tmp[j] = _convolution(data2d[j], filt_fun)
     return tmp
 
 def _convolution(data, filt_func):
