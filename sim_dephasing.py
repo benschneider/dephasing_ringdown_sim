@@ -44,9 +44,9 @@ Qs = 1500
 w_res = 300.0*2*np.pi
 
 #Ringdowntime in usec
-t_0 = -17 #start
+t_0 = -37 #start
 t_1 = int(Qs/w_res*30.0) #stop
-t_p = 400 #number of points
+t_p = 700 #number of points
 
 #Frequency in MHz
 span = w_res/Qs*10
@@ -55,9 +55,9 @@ w_1 = w_res+span
 w_p = 1501
 
 #Ringdown Q factor range
-Qr_0 = Qs
-Qr_1 = Qs*10
-Qr_p = 5
+Qr_0 = 1500
+Qr_1 = 10000
+Qr_p = 17
 
 #make np arrays
 t_array  = np.linspace(t_0, t_1, t_p)
@@ -84,7 +84,7 @@ lockin_filter = sim.filter2d_lockin(lockin_response) #calculate and return a nor
 #the following is done by manual selection
 #pl.plot(lockin_filter[207:207+t_p])
 
-filt_fun = lockin_filter[207:207+t_p]
+filt_fun = lockin_filter #[207:207+t_p]
 #filtfun = lockin_filter
 #tmp = np.zeros([1,len(filtfun)]) #store filter in the right format
 #for j in range(0, tmp.shape[0]):
