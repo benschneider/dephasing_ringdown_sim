@@ -48,13 +48,14 @@ def savedat(filename1,data1,**quarks):
     simply uses numpy.savetext with a 
     delimiter = ','    
     
-    np.savetxt("QsQr.dat",stuff ,delimiter =',')    
+    np.savetxt("QsQr.dat",stuff ,delimiter =',')
+    default: delimiter = '\t'  (works best with gnuplot even with excel)  
     '''
     data1 = zip(*data1)
     if 'delimiter' in quarks:
         np.savetxt(filename1, data1 ,**quarks)    
     else:
-        np.savetxt(filename1, data1 , delimiter = ',', **quarks)    
+        np.savetxt(filename1, data1 , delimiter = '\t', **quarks)    
 
 def loadcsv(filename, delim =';'):
     #open file (using with to make sure file is closed afer use)

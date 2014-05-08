@@ -28,6 +28,7 @@ show/print result
 import parsers as parser
 import matplotlib.pyplot as pl
 import numpy as np
+#import simulation_functions as sim
 
 def norm_line(linecut):
     '''set the number range from 0 to 1'''
@@ -52,54 +53,99 @@ def find_index(linecut,target):
     
     return index#,tmp1
 
+def find_idx2(data, target, pre_target = 0.5, pre_range = 60):
+    '''specifically for this type of ringdown data'''
+    #pre normalize data
+    data = norm_line(data) 
+    
+    #find pre position    
+    pre_pos0 = find_index(data, pre_target)
+    
+    #select target area
+    pre_0 = (pre_pos0 - pre_range)
+    if pre_0 < 0: print 'pre_0 is less than 0, decrease pre_range value'
+    pre_1 = (pre_pos0 + pre_range)
+    data1 = data[pre_0:pre_1]
 
-filename1 = 'sim_dephasing2.mtx' #simulated data (3d np array)
-filename2 = 'experimental/n20dBm_amp_subed.l.139.linecut.dat'
-#filename2 = 'experimental/n20dBm_amp_for_fitting.l.139.linecut.dat'
+    #find target in target area
+    pre_pos1 = find_index(data1, target) 
+    pos = pre_0 +pre_pos1
+    
+    return pos
+    
+def crop_at_target(data1d, pos, fit_left, fit_right):
+    p0 = pos - fit_left
+    p1 = pos + fit_right
+    if p0 < 0: print 'p0 is less than 0, decrease left range'
+    data1d2 = data1d[p0:p1]    
+    return data1d2
 
-meas_raw = parser.loaddat(filename2) #load data
-sim_raw,  sim_raw_head  = parser.loadmtx(filename1) #load data
 
-fit_adj = 0.5
-fit_adjf = 0.99
-fit_range = 110 #points
-fit_left = 200 #points
-fit_right = 250 #points
+
+#----- File names ----
+filename1 = 'sim_dephasing-n43dbm.mtx' #simulated data (3d np array)
+#filename2 = 'measured/n20dBm_amp_subed.l.139.linecut.dat'
+#filename2 = 'measured/n22dBm_amp_subed.l.139.linecut.dat'
+filename2 = 'measured/n44dBm_amp2_subed.l.399.linecut.dat'
+
+#output file of the best fit value
+gnu_file1 = 'fit_n43dbm.txt'
+gnu_file2 = 'chi_n43dbm.txt'
+
+#this needs to be coppied from the simulation 
+#(can also be extracted from the header)
+Qs = 6247
+Qr_0 = Qs
+Qr_1 = Qs+5000
+Qr_p = 21
+Qr_array = np.linspace(Qr_0, Qr_1, Qr_p)
+
+
+#to be adjusted to ensure the pre alignment works well
+fit_adj = 0.45 #0.5
+fit_adjf = 0.001 # 0.01
+pre_range = 50 #60 points
+
+fit_left = 40 #50 #points
+fit_right = 180 #180 #points
+
+#----- Load files ----
+meas_raw = parser.loaddat(filename2)
+sim_raw,  sim_raw_head  = parser.loadmtx(filename1)
 
 #----- Measured trace ---- (no loop required)
-meas_data = np.array(meas_raw[1]) 
+meas_data = np.array(meas_raw[1])
 meas_data = norm_line(meas_data) #normalize
 meas_time = np.array(meas_raw[0])#time in sec
 meas_time = meas_time*1e6 #set time in usec
 
 #find zero position and adjust time
-meas_data = norm_line(meas_data) #pre normalize data
-meas_0pos1 = find_index(meas_data, fit_adj)
-meas_0pos = find_index(meas_data[meas_0pos1-60:meas_0pos1+100], fit_adjf)
-meas_0pos = meas_0pos+meas_0pos1-60
-meas_0off = meas_time[meas_0pos]
-meas_time = (meas_time - meas_0off)
+meas_pos = find_idx2(meas_data, fit_adjf, fit_adj, pre_range)
+meas_time_off = meas_time[meas_pos]
+meas_time = (meas_time - meas_time_off)
 
-#crop around zero postion
-meas_p0 = (meas_0pos - fit_left)
-meas_p1 = (meas_0pos + fit_right)
-meas_time = meas_time[meas_p0:meas_p1]
-meas_data = meas_data[meas_p0:meas_p1]
+#crop data and time arrays
+meas_data = crop_at_target(meas_data, meas_pos, fit_left, fit_right)
+meas_time = crop_at_target(meas_time, meas_pos, fit_left, fit_right)
 
-#post normalize data
+#post normalize daya
 meas_data = norm_line(meas_data)
 
+#prepare / remove previous figures
 pl.figure(1)
 pl.close()
 pl.figure(2)
 pl.close()
+pl.figure(3)
+pl.close()
+pl.figure(4)
+pl.close()
 
 pl.figure(1)
-pl.plot(-meas_data+1)
+pl.plot(meas_time,-meas_data+1)
 
 
 #----- Simulated trace ---- (loop is required)
-
 sim_res_index = round(sim_raw.shape[1]/2) #3d mat resonance pos
 
 #produce time axis for simulated data set
@@ -108,41 +154,56 @@ sim_t_1 = eval(sim_raw_head[4])
 sim_time2 = np.linspace(sim_t_0, sim_t_1, sim_raw.shape[2])
 
 Ki2 = np.zeros(sim_raw.shape[0])
+sim_store = np.zeros([sim_raw.shape[0],(fit_left+fit_right)])
 
 for Qr_index in range(0,sim_raw.shape[0]):
     #Qr_index = 0 #this is temporarily
     sim_data = sim_raw[Qr_index][sim_res_index] #select Qr trace
-    sim_data = sim_data[120:-1] #precrop for bugfixing
-    sim_time = sim_time2[120:-1]
-    
+    sim_data = sim_data
+    sim_time = sim_time2
+      
     #find zero position and adjust time
-    sim_data = norm_line(sim_data) #pre normalize data
-    sim_0pos1 = find_index(sim_data, fit_adj)
-    sim_0pos = find_index(sim_data[sim_0pos1-60:sim_0pos1+100], fit_adjf)
-    sim_0pos = sim_0pos+sim_0pos1-60
-
-    sim_0off = sim_time[sim_0pos]
-    sim_time = (sim_time - sim_0off)
+    sim_pos = find_idx2(sim_data, fit_adjf, fit_adj, pre_range)
+    sim_time_off = sim_time[sim_pos]
+    sim_time = (sim_time - sim_time_off)
     
-    #crop around zero postion
-    sim_p0 = (sim_0pos - fit_left) 
-    sim_p1 = (sim_0pos + fit_right)
-    sim_data = sim_data[sim_p0:sim_p1]
-    sim_time = sim_time[sim_p0:sim_p1]
+    #crop data and time arrays
+    sim_data = crop_at_target(sim_data, sim_pos, fit_left, fit_right)
+    sim_time = crop_at_target(sim_time, sim_pos, fit_left, fit_right)
     
-    #post normalize data
-    #sim_data = norm_line(sim_data)
-    
+    #post normalize daya
+    sim_data = norm_line(sim_data)
+    sim_store[Qr_index] = sim_data 
     #calculate difference
     Ki2_tmp= (meas_data-sim_data)**2
     Ki2[Qr_index] = Ki2_tmp.sum()
 
-    #pl.close()
-    #pl.plot(sim_time,sim_data)
-    #pl.plot(meas_time,meas_data)
+    #plot results
     pl.figure(1)
-    pl.plot(-sim_data+1)
+    pl.plot(sim_time,-sim_data+1)
 
 
+#plot Chi-squared as a func of Qr
 pl.figure(2)
-pl.plot(Ki2)
+pl.plot(Qr_array, Ki2)
+
+#plot best fit and measured data
+pl.figure(3)
+pl.plot(meas_time,-meas_data+1)
+bestfit_idx = Ki2.argmin()
+bestfit = -sim_store[bestfit_idx]+1
+nodephasing = -sim_store[0]+1
+pl.plot(sim_time,bestfit)
+
+#plot the difference squared (meas-bestfit)
+pl.figure(4)
+difference = ((-meas_data+1)-bestfit)
+pl.plot(sim_time,difference**2)
+print (difference**2).sum()
+
+#save for gnuplot
+gnu_data1 = np.array(([meas_time,(-meas_data+1),bestfit, nodephasing]))
+gnu_data2 = np.array(([Qr_array, Ki2]))
+
+parser.savedat(gnu_file1, gnu_data1, delimiter = '\t')
+parser.savedat(gnu_file2, gnu_data2, delimiter = '\t')
