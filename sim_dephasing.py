@@ -40,13 +40,14 @@ filename4 = 'sim_dephasing2.mtx'
 filename_lockinfilter = 'experimental/1_2_filt8.Wfm.csv' #100us long 1000pt res
 
 #set variables
-Qs = 1500
+Qs = 1407 #Qs is 1407
 w_res = 300.0*2*np.pi
 
 #Ringdowntime in usec
-t_0 = -40 #start
-t_1 = 40 #int(Qs/w_res*30.0) #stop
-t_p = 801 #number of points
+t_0 = -50 #start
+t_1 = 50 #int(Qs/w_res*30.0) #stop
+t_p = 701 #number of points
+#100.1/700
 
 #Frequency in MHz
 span = w_res/Qs*10
@@ -55,9 +56,9 @@ w_1 = w_res+span
 w_p = 1501
 
 #Ringdown Q factor range
-Qr_0 = 1500
-Qr_1 = 10000
-Qr_p = 17
+Qr_0 = 1407
+Qr_1 = 10007
+Qr_p = 21
 
 #make np arrays
 t_array  = np.linspace(t_0, t_1, t_p)
@@ -79,18 +80,19 @@ matrix3d = sim.get_dephased_matrix(matrix3d, Qd_array, w_array, method='lor')
 print time()-t1
 
 #grab lockin response and extract lockin filter function:
+#lockin_response = parser.loadcsv(filename_lockinfilter)
 lockin_response = parser.loadcsv(filename_lockinfilter)
-lockin_filter = sim.filter2d_lockin(lockin_response) #calculate and return a normalized filter
-#the following is done by manual selection
-#pl.plot(lockin_filter[207:207+t_p])
+lockin_response = lockin_response[0]
 
-filt_fun = lockin_filter[0:450] #[207:207+t_p]
-#filtfun = lockin_filter
-#tmp = np.zeros([1,len(filtfun)]) #store filter in the right format
-#for j in range(0, tmp.shape[0]):
-#    tmp[j] = filtfun #store normalized filte
-#
-#filtfun = tmp
+lockin_filter = sim.filter2d_lockin(lockin_response) #calculate and return a normalized filter
+#shrink-extend filter to right size
+lockin_filter = sim.shrink_extend_array(lockin_filter, t_p)
+
+#the following is done by manual selection
+filt_peakidx = lockin_filter.argmax()
+filt_crop = (filt_peakidx*2)+30 #this 30 was added by inspection
+filt_fun = lockin_filter[0:] #[207:207+t_p]
+filt_fun = sim.norm_filter(filt_fun) #renormalize croped filter
 
 print 'convolve matrix with filter function'
 matrix3d = sim.get_matrix_lockin_convolved(matrix3d, filt_fun)

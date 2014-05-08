@@ -131,9 +131,7 @@ def filter2d_lockin(lockin_response):
     is used to extract lockin-filter
     '''
     #norm signal
-    #lockin_input = lockin_response[1] - lockin_response[1].min()
-    #lockin_input = lockin_input/lockin_input.max()
-    lockin_output = lockin_response[0] - lockin_response[0].min()
+    lockin_output = lockin_response - lockin_response.min()
     lockin_output = lockin_output/lockin_output.max()
     raw_filter = diff_acurate(lockin_output) #calc derivative
     return norm_filter(raw_filter[1:-1])
@@ -310,3 +308,26 @@ def fit_matrix_spectral(w_array, matrix3d):
 
     Qsp = spopt.transpose()   
     return Qsp, qsfit
+    
+def shrink_extend_array(a, xdim):
+    ''' 
+    this function is used to shrink or extend an 1d-array
+    as a first approximation, it takes the average between 2 points! 
+    to extend or to shrink the array
+    so any changes larger than a factor of 2 or 3 will be inaccurate
+    '''
+    b = np.zeros((xdim))
+    
+    
+    for i in range(xdim):
+        index = (i * len(a) / xdim)
+        #the would be index     
+
+        tmp1 = a[int(index)] 
+        tmp2 = a[round(index)]
+        tmp = (tmp1+tmp2)/2
+        #tmp = a[index]
+        
+        b[i] = tmp
+    
+    return b
