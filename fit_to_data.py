@@ -103,7 +103,7 @@ Qr_array = np.linspace(Qr_0, Qr_1, Qr_p)
 
 #to be adjusted to ensure the pre alignment works well
 fit_adj = 0.45 #0.5
-fit_adjf = 0.001 # 0.01
+fit_adjf = 0.5 # 0.01
 pre_range = 50 #60 points
 
 fit_left = 40 #50 #points
@@ -114,7 +114,7 @@ meas_raw = parser.loaddat(filename2)
 sim_raw,  sim_raw_head  = parser.loadmtx(filename1)
 
 #----- Measured trace ---- (no loop required)
-meas_data = np.array(meas_raw[1])
+meas_data = -np.array(meas_raw[1])
 meas_data = norm_line(meas_data) #normalize
 meas_time = np.array(meas_raw[0])#time in sec
 meas_time = meas_time*1e6 #set time in usec

@@ -35,6 +35,7 @@ filename4 = 'sim_dephasing-n43dbm.mtx'
  
 #input filename
 #filename_lockinfilter = 'experimental/1_2_filt8.Wfm.csv' #100us with 1000pt res
+#filename_lockinfilter = 'experimental/900n_filt1.Wfm.csv' #100us with 1000pt res
 filename_lockinfilter = 'experimental/900n_filt1.Wfm.csv' #100us with 1000pt res
 
 #set variables
