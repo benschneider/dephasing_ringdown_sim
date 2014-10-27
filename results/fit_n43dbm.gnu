@@ -118,14 +118,14 @@ set xlabel ""
 set xlabel  offset character 0, 0, 0 font "" textcolor lt -1 norotate
 set x2label "" 
 set x2label  offset character 0, 0, 0 font "" textcolor lt -1 norotate
-set xrange [ -1.00000 : 20.0000 ] noreverse nowriteback
-set x2range [ -1.35671 : 28.2537 ] noreverse nowriteback
+set xrange [ -1.00000 : 23.0000 ] noreverse nowriteback
+set x2range [ -0.961595 : 26.5647 ] noreverse nowriteback
 set ylabel "" 
 set ylabel  offset character 0, 0, 0 font "" textcolor lt -1 rotate by -270
 set y2label "" 
 set y2label  offset character 0, 0, 0 font "" textcolor lt -1 rotate by -270
-set yrange [ -0.0176444 : 1.00842 ] noreverse nowriteback
-set y2range [ -0.0176445 : 1.00842 ] noreverse nowriteback
+set yrange [ -0.00879922 : 1.01274 ] noreverse nowriteback
+set y2range [ -0.00879922 : 1.01274 ] noreverse nowriteback
 set zlabel "" 
 set zlabel  offset character 0, 0, 0 font "" textcolor lt -1 norotate
 set zrange [ * : * ] noreverse nowriteback
@@ -151,8 +151,9 @@ set fontpath
 set psdir
 set fit noerrorvariables
 GNUTERM = "x11"
-fn = "fit_n20dbm.txt"
-t1 = "Qr = 6137"
-file = "fit_n20dbm.ps"
-plot fn u 1:2 w l lt rgb "#000000" t 'measured Qs 1407' , fn u 1:3 w l t t1 lt rgb "#FF0000", fn u ($1-0.7):4 w l t 'Qr = 1407'
+fn = "fit_n43dbm.txt"
+t1 = "Qr = 6979"
+file = "fit_n43dbm.ps"
+t2 = "Qr = 6247"
+plot fn u 1:2 w l t 'measured Qs = 6247', fn u ($1+0.3):3 w l t t2
 #    EOF

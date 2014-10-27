@@ -11,7 +11,7 @@
 #    	gnuplot home:     http://www.gnuplot.info
 #    	faq, bugs, etc:   type "help FAQ"
 #    	immediate help:   type "help"  (plot window: hit 'h')
-# set terminal x11  nopersist
+# set terminal x11 
 # set output
 unset clip points
 set clip one
@@ -114,18 +114,18 @@ set rrange [ * : * ] noreverse nowriteback
 set trange [ * : * ] noreverse nowriteback
 set urange [ * : * ] noreverse nowriteback
 set vrange [ * : * ] noreverse nowriteback
-set xlabel "" 
+set xlabel "Qr" 
 set xlabel  offset character 0, 0, 0 font "" textcolor lt -1 norotate
 set x2label "" 
 set x2label  offset character 0, 0, 0 font "" textcolor lt -1 norotate
-set xrange [ -1.00000 : 20.0000 ] noreverse nowriteback
-set x2range [ -1.35671 : 28.2537 ] noreverse nowriteback
-set ylabel "" 
+set xrange [ * : * ] noreverse nowriteback
+set x2range [ * : * ] noreverse nowriteback
+set ylabel "Chi-square" 
 set ylabel  offset character 0, 0, 0 font "" textcolor lt -1 rotate by -270
 set y2label "" 
 set y2label  offset character 0, 0, 0 font "" textcolor lt -1 rotate by -270
-set yrange [ -0.0176444 : 1.00842 ] noreverse nowriteback
-set y2range [ -0.0176445 : 1.00842 ] noreverse nowriteback
+set yrange [ * : * ] noreverse nowriteback
+set y2range [ * : * ] noreverse nowriteback
 set zlabel "" 
 set zlabel  offset character 0, 0, 0 font "" textcolor lt -1 norotate
 set zrange [ * : * ] noreverse nowriteback
@@ -133,10 +133,10 @@ set cblabel ""
 set cblabel  offset character 0, 0, 0 font "" textcolor lt -1 rotate by -270
 set cbrange [ * : * ] noreverse nowriteback
 set zero 1e-08
-set lmargin  8
-set bmargin  4
-set rmargin  2
-set tmargin  4
+set lmargin  -1
+set bmargin  -1
+set rmargin  -1
+set tmargin  -1
 set locale "C"
 set pm3d explicit at s
 set pm3d scansautomatic
@@ -151,8 +151,5 @@ set fontpath
 set psdir
 set fit noerrorvariables
 GNUTERM = "x11"
-fn = "fit_n20dbm.txt"
-t1 = "Qr = 6137"
-file = "fit_n20dbm.ps"
-plot fn u 1:2 w l lt rgb "#000000" t 'measured Qs 1407' , fn u 1:3 w l t t1 lt rgb "#FF0000", fn u ($1-0.7):4 w l t 'Qr = 1407'
+plot 'chi_n22dbm.txt' u 1:2 w l
 #    EOF

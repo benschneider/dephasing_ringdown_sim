@@ -11,7 +11,7 @@
 #    	gnuplot home:     http://www.gnuplot.info
 #    	faq, bugs, etc:   type "help FAQ"
 #    	immediate help:   type "help"  (plot window: hit 'h')
-# set terminal x11 
+# set terminal x11  nopersist
 # set output
 unset clip points
 set clip one
@@ -118,14 +118,14 @@ set xlabel ""
 set xlabel  offset character 0, 0, 0 font "" textcolor lt -1 norotate
 set x2label "" 
 set x2label  offset character 0, 0, 0 font "" textcolor lt -1 norotate
-set xrange [ -11.1569 : 32.8977 ] noreverse nowriteback
-set x2range [ -8.05524 : 30.9333 ] noreverse nowriteback
+set xrange [ -1.00000 : 20.0000 ] noreverse nowriteback
+set x2range [ 0.130700 : 21.3338 ] noreverse nowriteback
 set ylabel "" 
 set ylabel  offset character 0, 0, 0 font "" textcolor lt -1 rotate by -270
 set y2label "" 
 set y2label  offset character 0, 0, 0 font "" textcolor lt -1 rotate by -270
-set yrange [ -0.0142518 : 1.01874 ] noreverse nowriteback
-set y2range [ -0.0142518 : 1.01874 ] noreverse nowriteback
+set yrange [ -0.00455939 : 1.00569 ] noreverse nowriteback
+set y2range [ -0.00455933 : 1.00569 ] noreverse nowriteback
 set zlabel "" 
 set zlabel  offset character 0, 0, 0 font "" textcolor lt -1 norotate
 set zrange [ * : * ] noreverse nowriteback
@@ -152,5 +152,7 @@ set psdir
 set fit noerrorvariables
 GNUTERM = "x11"
 fn = "fit_n22dbm.txt"
-plot fn u 1:2 w l t 'measured Qs 2236' , fn u 1:3 w l t 'Qr = 6790', fn u ($1-1):4 w l t 'Qr = 2236'
+t1 = "Qr = 6137"
+file = "fit_n22dbm.ps"
+plot fn u 1:2 w l lt rgb "#000000" t 'measured Qs 2236' , fn u 1:3 w l t 'Qr = 5739', fn u ($1-1):4 w l t 'Qr = 2236'
 #    EOF

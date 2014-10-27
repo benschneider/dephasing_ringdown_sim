@@ -26,7 +26,17 @@ def Yr2(t,w,w0,Q):
 def yqfit(w, Q, w0 = 300*2*np.pi):
     ''' 
     Equation for fitting (Spectral Q)
-    returns -w0*w0*w0*w/Q/( (w0*w0-w*w)*(w0*w0-w*w) + w*w*w0*w0/Q/Q )    
+    returns -w0*w0*w0*w/Q/( (w0*w0-w*w)*(w0*w0-w*w) + w*w*w0*w0/Q/Q )
+
+    The array of numbers returned should represent the imaginary part of the mechanical response.
+    (usefull to plot these result:
+        for example:
+        import matplotlib.pyplot as pl
+        import equations as eq
+        imresponse1 = eq.yqfit(w_array, Qd, w_array.mean())
+        pl.plot(imresponse1)
+    )
+    
     '''
     return -w0*w0*w0*w/Q/( (w0*w0-w*w)*(w0*w0-w*w) + w*w*w0*w0/Q/Q )
 

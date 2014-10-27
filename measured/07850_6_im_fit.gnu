@@ -31,7 +31,7 @@ set timefmt x2 "%d/%m/%y,%H:%M"
 set x2data 
 set boxwidth
 set style fill  empty border
-set style rectangle back fc  lt -3 fillstyle   solid 1.00 border lt -1
+set style rectangle back fc lt -3 fillstyle   solid 1.00 border lt -1
 set style circle radius graph 0.02, first 0, 0 
 set style ellipse size graph 0.05, 0.03, first 0 angle 0 units xy
 set dummy x,y
@@ -96,7 +96,7 @@ set mcbtics default
 set xtics border in scale 1,0.5 mirror norotate  offset character 0, 0, 0 autojustify
 set xtics autofreq  norangelimit
 set ytics border in scale 1,0.5 mirror norotate  offset character 0, 0, 0 autojustify
-set ytics autofreq  norangelimit
+set ytics 0.5 norangelimit
 set ztics border in scale 1,0.5 nomirror norotate  offset character 0, 0, 0 autojustify
 set ztics autofreq  norangelimit
 set nox2tics
@@ -118,14 +118,14 @@ set xlabel ""
 set xlabel  offset character 0, 0, 0 font "" textcolor lt -1 norotate
 set x2label "" 
 set x2label  offset character 0, 0, 0 font "" textcolor lt -1 norotate
-set xrange [ -1.00000 : 20.0000 ] noreverse nowriteback
-set x2range [ -1.35671 : 28.2537 ] noreverse nowriteback
+set xrange [ 0.00000 : 35.0000 ] noreverse nowriteback
+set x2range [ * : * ] noreverse nowriteback
 set ylabel "" 
 set ylabel  offset character 0, 0, 0 font "" textcolor lt -1 rotate by -270
 set y2label "" 
 set y2label  offset character 0, 0, 0 font "" textcolor lt -1 rotate by -270
-set yrange [ -0.0176444 : 1.00842 ] noreverse nowriteback
-set y2range [ -0.0176445 : 1.00842 ] noreverse nowriteback
+set yrange [ -0.0100000 : 1.01000 ] noreverse nowriteback
+set y2range [ * : * ] noreverse nowriteback
 set zlabel "" 
 set zlabel  offset character 0, 0, 0 font "" textcolor lt -1 norotate
 set zrange [ * : * ] noreverse nowriteback
@@ -133,10 +133,10 @@ set cblabel ""
 set cblabel  offset character 0, 0, 0 font "" textcolor lt -1 rotate by -270
 set cbrange [ * : * ] noreverse nowriteback
 set zero 1e-08
-set lmargin  8
-set bmargin  4
+set lmargin  10
+set bmargin  6
 set rmargin  2
-set tmargin  4
+set tmargin  6
 set locale "C"
 set pm3d explicit at s
 set pm3d scansautomatic
@@ -151,8 +151,12 @@ set fontpath
 set psdir
 set fit noerrorvariables
 GNUTERM = "x11"
-fn = "fit_n20dbm.txt"
-t1 = "Qr = 6137"
-file = "fit_n20dbm.ps"
-plot fn u 1:2 w l lt rgb "#000000" t 'measured Qs 1407' , fn u 1:3 w l t t1 lt rgb "#FF0000", fn u ($1-0.7):4 w l t 'Qr = 1407'
+t0 = -5
+a0 = 1
+t1 = 6
+a1 = 1.02
+b0 = 0
+b1 = 0.02
+file = "07850_6_im_fit.ps"
+plot 'sim_07850_6_im_5405.l.750.linecut.dat' u ($1-t0):(-1*($2/4000*a0+b0)) w l, '07850_6_im_analysis_sub3.l.183.linecut.dat' u ($1-t1):(-1*($2/4.8*a1+b1)) w l
 #    EOF

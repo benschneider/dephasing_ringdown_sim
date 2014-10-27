@@ -78,37 +78,38 @@ def get_ringdown_matrix_Y(w_array, w_res, t, Qr_array):
 #-------- calculate dephasing     
 
 
-def get_dephased_matrix(matrix3d, dephasing, w_array, method='gaus'):
+def get_dephased_matrix(matrix3d, Qd_array, w_array, w_res, method='gaus'):
     ''' matrix is a 3d np.array, have 2-d maps which require different dephasing 
         method can be gausian dephasing or resonator lorenzian like dephasing.
         method = 'gaus' > gaussian dehasing
         method = 'lor'  > lor like shape dephasing
     '''
     if method == 'lor':
-        matrix3d = _get_dephased_matrix_lor(matrix3d, dephasing, w_array)
+        matrix3d = _get_dephased_matrix_lor(matrix3d, Qd_array, w_res, w_array)
     elif method == 'gaus':
-        matrix3d = _get_dephased_matrix_gaus(matrix3d, dephasing, w_array)
+        matrix3d = _get_dephased_matrix_gaus(matrix3d, Qd_array, w_res, w_array)
     return matrix3d
     
-def _get_dephased_matrix_lor(matrix3d, dephasing, w_array): 
+def _get_dephased_matrix_lor(matrix3d, Qd_array, w_res, w_array): 
     ''' dephasing convolved with a resonator like line shape'''
     k = 1
-    for Qd in dephasing:
-        filter2d =  filter2d_lor(w_array,Qd)#,crop = int(matrix3d.shape[1]/2.05))    
+    w_res = w_array.mean() #use center position for dephasing calculation
+    for Qd in Qd_array:
+        filter2d =  filter2d_lor(w_array, w_res, Qd)#,crop = int(matrix3d.shape[1]/2.05))    
         matrix3d[k] = signal.convolve2d(matrix3d[k], filter2d, mode = 'same') #and here python commits suicide...
         #matrix3d[k] = matrix3d[k]/adj #for debuging of the convolution function 
         k += 1
         print str(100.0*k/(matrix3d.shape[0])) + ' %'
     return matrix3d
 
-def _get_dephased_matrix_gaus(matrix3d, dephasing, w_array):
+def _get_dephased_matrix_gaus(matrix3d, Qd_array, w_res, w_array):
     ''' dephasing convolved with a gaussian line shape
     This function is a lot faster!    
     '''
     k = 1
-    w_res = w_array.mean() #resonance frequency    
+    #w_res = w_array.mean() #resonance frequency    
     fpix = eq.pix2f(w_array) #(pixel/frequency)
-    for Qd in dephasing:
+    for Qd in Qd_array:
         FWHM = w_res/Qd #width in freq for given Q
         pixel = FWHM*fpix/2  #in terms of number of pixel
         matrix3d[k] = scipy.ndimage.filters.gaussian_filter(matrix3d[0], (pixel, 0))
@@ -157,13 +158,14 @@ def diff_acurate(a):
 
 
 # for a range of Qr and a fixed assumed Qs
-def filter2d_lor(w_array, Qd, crop = 0):
+def filter2d_lor(w_array, w_res, Qd, crop = 0):
     ''' -
     w_array is the list of frequencies
     Qd the dephasing Q factor 
-    if crop != 0 it crops from both ends points
+    if crop > 0 it crops from both ends points by numbers given
     '''
-    function = eq.yqfit(w_array, Qd) #obtain a lorenzian line shape
+    
+    function = eq.yqfit(w_array, Qd, w_res) #obtain a lorenzian line shape
     function = -function/Qd
     function = norm_filter(function) #normalize filter
     #this simply crops off the edges of the filter    
