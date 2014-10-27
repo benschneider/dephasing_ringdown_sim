@@ -17,3 +17,7 @@ xsection.dat
 experimental/for_fitting.img_proc
 
 *.dat
+
+results/fit_n22dbm.pdf
+
+results/fit_n22dbm.ps
