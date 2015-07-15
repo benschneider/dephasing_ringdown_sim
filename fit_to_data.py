@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 """
 Created on Tue May  6 17:54:15 2014
 
@@ -6,9 +6,9 @@ Created on Tue May  6 17:54:15 2014
 
 structure of this code:
 1st.
-load simulated data with the fixed Qs and different Qrs. 
+load simulated data with the fixed Qs and different Qrs.
 (simulated data set needs to have the same time/point ratio as the measured data)
-load measured data with known Qs and unknown Qr 
+load measured data with known Qs and unknown Qr
 
 2nd.
 for each (Qr) in simulated data and the measured data list:
@@ -37,11 +37,11 @@ def norm_line(linecut):
     return linecut
 
 def find_index(linecut,target):
-    '''go through each element and 
+    '''go through each element and
     see if it is closer to the target element.
-    if so, store position, 
-    otherwise continue searching until all elements have been checked.    
-    '''    
+    if so, store position,
+    otherwise continue searching until all elements have been checked.
+    '''
     i = 0
     tmp1 = 1
     for num in linecut:
@@ -50,17 +50,17 @@ def find_index(linecut,target):
             tmp1 = value
             index = i
         i+=1
-    
+
     return index#,tmp1
 
 def find_idx2(data, target, pre_target = 0.5, pre_range = 60):
     '''specifically for this type of ringdown data'''
     #pre normalize data
-    data = norm_line(data) 
-    
-    #find pre position    
+    data = norm_line(data)
+
+    #find pre position
     pre_pos0 = find_index(data, pre_target)
-    
+
     #select target area
     pre_0 = (pre_pos0 - pre_range)
     if pre_0 < 0: print 'pre_0 is less than 0, decrease pre_range value'
@@ -68,17 +68,17 @@ def find_idx2(data, target, pre_target = 0.5, pre_range = 60):
     data1 = data[pre_0:pre_1]
 
     #find target in target area
-    pre_pos1 = find_index(data1, target) 
+    pre_pos1 = find_index(data1, target)
     pos = pre_0 +pre_pos1
-    
+
     return pos
-    
+
 def crop_at_target(data1d, pos, fit_left, fit_right):
     p0 = pos - fit_left
     p1 = pos + fit_right
-    if p0 < 0: 
+    if p0 < 0:
         print 'p0 is less than 0, decrease left range'
-    data1d2 = data1d[p0:p1]    
+    data1d2 = data1d[p0:p1]
     return data1d2
 
 
@@ -147,7 +147,7 @@ for Qr_index in range(0,sim_raw.shape[0]):
     sim_time = crop_at_target(sim_time, sim_pos, fit_left, fit_right)
     #post normalize daya
     sim_data = norm_line(sim_data)
-    sim_store[Qr_index] = sim_data 
+    sim_store[Qr_index] = sim_data
     #calculate difference
     Ki2_tmp= (meas_data-sim_data)**2
     Ki2[Qr_index] = Ki2_tmp.sum()
